@@ -1,0 +1,45 @@
+{
+"GLACCNT": [
+	{
+		"GLACCOUNT" : "1001.05",
+		"CURRENCYID" : 1,
+		"ACCOUNTNAME" : "Input dari web convert Aaron",
+		"ACCOUNTTYPE" : 22,
+		"SUBACCOUNT" : 0,
+		"PARENTACCOUNT" : null,
+		"SUSPENDED" : 0,
+		"MEMO" : "Test",
+		"FIRSTPARENTACCOUNT" : "1001",
+		"INDENTLEVEL" : 0,
+		"ISFISCAL" : 1,
+		"ISALLOCTOPROD" : 0,
+		"TRANSACTIONID" : 102,
+		"IMPORTEDTRANSACTIONID" : null,
+		"BRANCHCODEID" : 1,
+		"LFT" : 196,
+		"RGT" : 197,
+		"ISROOT" : null,
+		"NEXTINVOICENO" : null
+	},
+	{
+		"GLACCOUNT" : "1001.04.01",
+		"CURRENCYID" : 1,
+		"ACCOUNTNAME" : "Input dari web convert Aaron 2",
+		"ACCOUNTTYPE" : 21,
+		"SUBACCOUNT" : 0,
+		"PARENTACCOUNT" : null,
+		"SUSPENDED" : 0,
+		"MEMO" : "Test",
+		"FIRSTPARENTACCOUNT" : "1001.04",
+		"INDENTLEVEL" : 0,
+		"ISFISCAL" : 1,
+		"ISALLOCTOPROD" : 0,
+		"TRANSACTIONID" : 102,
+		"IMPORTEDTRANSACTIONID" : null,
+		"BRANCHCODEID" : 1,
+		"LFT" : 196,
+		"RGT" : 197,
+		"ISROOT" : null,
+		"NEXTINVOICENO" : null
+	}
+]}

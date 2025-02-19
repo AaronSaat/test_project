@@ -1,0 +1,63 @@
+Bulk Save Log - 2025-01-22 04:13:45
+--------------------------------------------
+FAILED: Account TEST INPUT DARI JSON (No: 003) could not be sent. Error: {
+    "s": true,
+    "d": [
+        {
+            "d": "Akun Perkiraan \"003\" berhasil disimpan",
+            "s": true,
+            "r": {
+                "no": "003",
+                "parent": null,
+                "sub": false,
+                "asOf": "22\/01\/2025",
+                "optLock": 0,
+                "memo": "null",
+                "accountTypeName": "Utang Usaha",
+                "childList": [],
+                "nameWithIndent": "TEST INPUT DARI JSON",
+                "branch": null,
+                "useUserAccessList": [],
+                "balance": 0,
+                "rate": 1,
+                "noWithIndent": "003",
+                "currency": {
+                    "symbol": "Rp",
+                    "defaultArAccountId": 159,
+                    "code": "IDR",
+                    "defaultSalesDiscAccountId": 60,
+                    "optLock": 9,
+                    "currencyConverterType": "TO_LOCAL",
+                    "defaultAdvSalesAccountId": 59,
+                    "exchangeRateSymbolCode": "IDR",
+                    "name": "Indonesian Rupiah",
+                    "defaultAdvPurchaseAccountId": 58,
+                    "defaultRealizeGlAccountId": 61,
+                    "codeSymbol": "IDR Rp",
+                    "id": 50,
+                    "defaultApAccountId": 302,
+                    "defaultUnrealizeGlAccountId": 62,
+                    "converterTypeName": "1 IDR=XXX IDR"
+                },
+                "id": 4806,
+                "currencyId": 50,
+                "usedAllUser": true,
+                "useUserRoleAccessList": [],
+                "autoNumberTransaction": null,
+                "canEditOpeningBalance": true,
+                "lvl": 1,
+                "isParent": false,
+                "accountType": "ACCOUNT_PAYABLE",
+                "parentNode": false,
+                "suspended": false,
+                "parentId": null,
+                "autoNumberTransactionId": null,
+                "nameWithIndentStrip": "TEST INPUT DARI JSON",
+                "fiscal": false,
+                "primeBalance": 0,
+                "name": "TEST INPUT DARI JSON",
+                "openBalance": 0
+            }
+        }
+    ]
+}

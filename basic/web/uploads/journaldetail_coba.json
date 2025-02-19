@@ -1,0 +1,51 @@
+{
+"JVDET": [
+	{
+		"JVID" : 1,
+		"SEQ" : 0,
+		"GLACCOUNT" : "6208.03.01",
+		"GLAMOUNT" : 200000.0000,
+		"SUBSIDIARY" : null,
+		"DESCRIPTION" : "notes",
+		"RATE" : 1.0000,
+		"PRIMEAMOUNT" : 200000.0000,
+		"DEPTID" : null,
+		"PROJECTID" : null,
+		"TXDATE" : null,
+		"RECONCILEID" : null,
+		"POSTED" : 0,
+		"FIXASSETID" : null
+	},
+	{
+		"JVID" : 1,
+		"SEQ" : 1,
+		"GLACCOUNT" : "1002.09",
+		"GLAMOUNT" : -100000.0000,
+		"SUBSIDIARY" : null,
+		"DESCRIPTION" : "hai",
+		"RATE" : 1.0000,
+		"PRIMEAMOUNT" : -100000.0000,
+		"DEPTID" : null,
+		"PROJECTID" : null,
+		"TXDATE" : null,
+		"RECONCILEID" : null,
+		"POSTED" : 0,
+		"FIXASSETID" : null
+	},
+	{
+		"JVID" : 1,
+		"SEQ" : 0,
+		"GLACCOUNT" : "1002.09",
+		"GLAMOUNT" : -50000.0000,
+		"SUBSIDIARY" : null,
+		"DESCRIPTION" : "tes",
+		"RATE" : 1.0000,
+		"PRIMEAMOUNT" : -50000.0000,
+		"DEPTID" : null,
+		"PROJECTID" : null,
+		"TXDATE" : null,
+		"RECONCILEID" : null,
+		"POSTED" : 0,
+		"FIXASSETID" : null
+	}
+]}

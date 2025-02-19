@@ -1,0 +1,29 @@
+{
+"JV": [
+	{
+		"JVID" : 12,
+		"JVNUMBER" : "TEST_001_VENDOR_DARI_WEBSITE",
+		"TRANSDATE" : "2025-01-30",
+		"GLYEAR" : 2025,
+		"GLPERIOD" : 1,
+		"SOURCE" : "GL",
+		"TRANSTYPE" : "JV",
+		"JVAMOUNT" : 100000.0000,
+		"POSTED" : 0,
+		"AUTOREVERSED" : 0,
+		"GLHISTID" : 1,
+		"LOCKED_BY" : null,
+		"LOCKED_TIME" : "2025-01-14",
+		"CHEQUENO" : null,
+		"PAYEE" : null,
+		"VOIDCHEQUE" : 0,
+		"RECONCILEID" : null,
+		"TEMPLATEID" : 34,
+		"BRANCHCODE" : null,
+		"TRANSACTIONID" : 103,
+		"IMPORTEDTRANSACTIONID" : null,
+		"BRANCHCODEID" : 1,
+		"RECURRINGID" : null,
+		"TRANSDESCRIPTION" : "input description"
+	}
+]}

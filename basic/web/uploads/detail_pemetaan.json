@@ -1,0 +1,68 @@
+{
+    "JVDET": [
+        {
+            "JVID": 1415,
+            "SEQ": 0,
+            "GLACCOUNT": "1002.01",
+            "GLAMOUNT": 10000.00,
+            "SUBSIDIARY": null,
+            "DESCRIPTION": "Detail 1415-0-dipetakan",
+            "RATE": 1.00,
+            "PRIMEAMOUNT": 10000.00,
+            "DEPTID": null,
+            "PROJECTID": null,
+            "TXDATE": null,
+            "RECONCILEID": null,
+            "POSTED": 0,
+            "FIXASSETID": null
+        },
+        {
+            "JVID": 1415,
+            "SEQ": 1,
+            "GLACCOUNT": "6202.01",
+            "GLAMOUNT": -10000.00,
+            "SUBSIDIARY": null,
+            "DESCRIPTION": "Detail 1415-1-dipetakan",
+            "RATE": 1.0,
+            "PRIMEAMOUNT": -10000.00,
+            "DEPTID": null,
+            "PROJECTID": null,
+            "TXDATE": null,
+            "RECONCILEID": null,
+            "POSTED": 0,
+            "FIXASSETID": null
+        },
+        {
+            "JVID": 1416,
+            "SEQ": 0,
+            "GLACCOUNT": "1001.02",
+            "GLAMOUNT": 10000.00,
+            "SUBSIDIARY": null,
+            "DESCRIPTION": "Detail 1416-0-Tidak dipetakan",
+            "RATE": 1.00,
+            "PRIMEAMOUNT": 10000.00,
+            "DEPTID": null,
+            "PROJECTID": null,
+            "TXDATE": null,
+            "RECONCILEID": null,
+            "POSTED": 0,
+            "FIXASSETID": null
+        },
+        {
+            "JVID": 1416,
+            "SEQ": 1,
+            "GLACCOUNT": "4000.03.01",
+            "GLAMOUNT": -10000.00,
+            "SUBSIDIARY": null,
+            "DESCRIPTION": "Detail 1416-1-Tidak dipetakan",
+            "RATE": 1.0,
+            "PRIMEAMOUNT": -10000.00,
+            "DEPTID": null,
+            "PROJECTID": null,
+            "TXDATE": null,
+            "RECONCILEID": null,
+            "POSTED": 0,
+            "FIXASSETID": null
+        }
+    ]
+}

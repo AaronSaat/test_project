@@ -1,0 +1,36 @@
+{
+    "JVDET": [
+        {
+            "JVID": 1416,
+            "SEQ": 0,
+            "GLACCOUNT": "1002.00",
+            "GLAMOUNT": 10000.00,
+            "SUBSIDIARY": null,
+            "DESCRIPTION": "Detail 1416-0-dipetakan",
+            "RATE": 1.00,
+            "PRIMEAMOUNT": 10000.00,
+            "DEPTID": null,
+            "PROJECTID": null,
+            "TXDATE": null,
+            "RECONCILEID": null,
+            "POSTED": 0,
+            "FIXASSETID": null
+        },
+        {
+            "JVID": 1416,
+            "SEQ": 1,
+            "GLACCOUNT": "6202.00",
+            "GLAMOUNT": -10000.00,
+            "SUBSIDIARY": null,
+            "DESCRIPTION": "Detail 1416-1-dipetakan",
+            "RATE": 1.0,
+            "PRIMEAMOUNT": -10000.00,
+            "DEPTID": null,
+            "PROJECTID": null,
+            "TXDATE": null,
+            "RECONCILEID": null,
+            "POSTED": 0,
+            "FIXASSETID": null
+        }
+    ]
+}

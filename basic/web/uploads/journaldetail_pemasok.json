@@ -1,0 +1,35 @@
+{
+"JVDET": [
+	{
+		"JVID" : 12,
+		"SEQ" : 0,
+		"GLACCOUNT" : "2000.05",
+		"GLAMOUNT" : 100000.0000,
+		"SUBSIDIARY" : "1000",
+		"DESCRIPTION" : "Pemasok Umum",
+		"RATE" : 1.0000,
+		"PRIMEAMOUNT" : 100000.0000,
+		"DEPTID" : null,
+		"PROJECTID" : null,
+		"TXDATE" : null,
+		"RECONCILEID" : null,
+		"POSTED" : 0,
+		"FIXASSETID" : null
+	},
+	{
+		"JVID" : 12,
+		"SEQ" : 1,
+		"GLACCOUNT" : "6214.04.02.06",
+		"GLAMOUNT" : -100000.0000,
+		"SUBSIDIARY" : null,
+		"DESCRIPTION" : "Detail",
+		"RATE" : 1.0000,
+		"PRIMEAMOUNT" : -100000.0000,
+		"DEPTID" : null,
+		"PROJECTID" : null,
+		"TXDATE" : null,
+		"RECONCILEID" : null,
+		"POSTED" : 0,
+		"FIXASSETID" : null
+	}
+]}

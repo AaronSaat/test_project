@@ -1,0 +1,30 @@
+{
+    "JV": [
+        {
+            "JVID": 1417,
+            "JVNUMBER": "TEST1417 - Branch",
+            "TRANSDATE": "2025-02-01",
+            "GLYEAR": 2025,
+            "GLPERIOD": 1,
+            "SOURCE": "GL",
+            "TRANSTYPE": "JV",
+            "JVAMOUNT": 10000.00,
+            "POSTED": 0,
+            "AUTOREVERSED": 0,
+            "GLHISTID":  1417,
+            "LOCKED_BY": null,
+            "LOCKED_TIME": "2025-02-01",
+            "CHEQUENO": null,
+            "PAYEE": null,
+            "VOIDCHEQUE": 0,
+            "RECONCILEID": null,
+            "TEMPLATEID": 34,
+            "BRANCHCODE": "RUMAH",
+            "TRANSACTIONID": 1001,
+            "IMPORTEDTRANSACTIONID": null,
+            "BRANCHCODEID": 1,
+            "RECURRINGID": null,
+            "TRANSDESCRIPTION": "Transaksi jurnal 1417 - Jurnal dengan branch"
+        }
+    ]
+}

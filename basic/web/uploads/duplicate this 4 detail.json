@@ -1,0 +1,68 @@
+{
+    "JVDET": [
+        {
+            "JVID": 901,
+            "SEQ": 0,
+            "GLACCOUNT": "1001.01",
+            "GLAMOUNT": 10000.00,
+            "SUBSIDIARY": null,
+            "DESCRIPTION": "Detail 901-0",
+            "RATE": 1.00,
+            "PRIMEAMOUNT": 10000.00,
+            "DEPTID": null,
+            "PROJECTID": null,
+            "TXDATE": null,
+            "RECONCILEID": null,
+            "POSTED": 0,
+            "FIXASSETID": null
+        },
+        {
+            "JVID": 901,
+            "SEQ": 1,
+            "GLACCOUNT": "2000.05",
+            "GLAMOUNT": -10000.00,
+            "SUBSIDIARY": "1000",
+            "DESCRIPTION": "Detail 901-1",
+            "RATE": 1.0,
+            "PRIMEAMOUNT": -10000.00,
+            "DEPTID": null,
+            "PROJECTID": null,
+            "TXDATE": null,
+            "RECONCILEID": null,
+            "POSTED": 0,
+            "FIXASSETID": null
+        },
+        {
+            "JVID": 901,
+            "SEQ": 0,
+            "GLACCOUNT": "1001.02",
+            "GLAMOUNT": 10000.00,
+            "SUBSIDIARY": null,
+            "DESCRIPTION": "Detail 901-0",
+            "RATE": 1.00,
+            "PRIMEAMOUNT": 10000.00,
+            "DEPTID": null,
+            "PROJECTID": null,
+            "TXDATE": null,
+            "RECONCILEID": null,
+            "POSTED": 0,
+            "FIXASSETID": null
+        },
+        {
+            "JVID": 901,
+            "SEQ": 1,
+            "GLACCOUNT": "4000.03.01",
+            "GLAMOUNT": -10000.00,
+            "SUBSIDIARY": null,
+            "DESCRIPTION": "Detail 901-1",
+            "RATE": 1.0,
+            "PRIMEAMOUNT": -10000.00,
+            "DEPTID": null,
+            "PROJECTID": null,
+            "TXDATE": null,
+            "RECONCILEID": null,
+            "POSTED": 0,
+            "FIXASSETID": null
+        }
+    ]
+}
