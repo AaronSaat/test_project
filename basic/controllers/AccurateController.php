@@ -189,7 +189,6 @@ class AccurateController extends Controller
         //     ]
         // ];
         
-        
         $batchSize = 100; // Batasi jumlah data per batch
         $batches = array_chunk($data, $batchSize);
             
