@@ -326,11 +326,6 @@ class ApiController extends Controller
         // $journal = Journal::find()->where(['id' => $selectedIds])->all();
         // $journals = Journal::find()->andWhere(['in', 'id', $selectedIds])->asArray()->all();
 
-        // echo "<pre>";
-        // print_r($journal);
-        // echo "</pre>";
-        // exit;
-
         // foreach ($journal as $journalprint) {
         //     var_dump($journalprint->attributes); // Menampilkan semua atribut dari model
         // }
@@ -342,11 +337,6 @@ class ApiController extends Controller
         // ->with('journaldetail') // Menggunakan relasi ke detail
         // ->asArray()
         // ->all();
-
-        // echo "<pre>";
-        // print_r($journals);
-        // echo "</pre>";
-        // exit;
 
         // Siapkan struktur data untuk API
         $formattedData = [];
@@ -373,13 +363,23 @@ class ApiController extends Controller
 
             $formattedData[] = $journalData;
         }
-
+        
         Yii::$app->session->set('journalData', $formattedData);
         Yii::$app->session->set('inputScope', "journal_voucher_save");
-
+        
         return $this->redirect(['accurate/authorize']);
     }
 
+    public function actionDeletealljournalapi() 
+    {
+        // var_dump('masuk');die;
+        $ids = range(1, 99);
+        Yii::$app->session->set('deleteJournalData', $ids);
+        Yii::$app->session->set('inputScope', 'journal_voucher_delete');
+
+        return $this->redirect(['accurate/authorize']);
+    }
+    
     public function actionSendaccountstoaol() //ini ke database XD
     {
         // Ambil data dari session yang disimpan sebelumnya

@@ -2,6 +2,7 @@
 
 use yii\grid\GridView;
 use yii\data\ActiveDataProvider;
+use yii\helpers\Url;
 use yii\helpers\Html;
 
 /** @var ActiveDataProvider $dataProvider */
@@ -18,6 +19,20 @@ $this->params['breadcrumbs'][] = $this->title;
 <p>
     Total Success: <strong><?= $successCountJournalError  ?></strong><br>
     Total Error: <strong><?= $errorCountJournalError  ?></strong>
+</p>
+
+<p>
+
+<?=
+// Button to call actionDeletealljournalapi
+ Html::a('Delete All Journals from Accurate Online', Url::to(['api/deletealljournalapi']), [
+    'class' => 'btn btn-danger',
+    'data' => [
+        'confirm' => 'Are you sure you want to delete all journals?',
+        'method' => 'post',
+    ],
+]);
+?>
 </p>
 
 <h2>Journal Error Log</h2>

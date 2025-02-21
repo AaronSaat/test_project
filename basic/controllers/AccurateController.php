@@ -28,7 +28,7 @@ class AccurateController extends Controller
             'client_id' => $this->clientId,
             'response_type' => 'code',
             'redirect_uri' => $this->redirectUri,
-            // 'scope' => 'journal_voucher_save',
+            // 'scope' => 'journal_voucher_delete',
             'scope' => Yii::$app->session['inputScope'], 
         ]);
 
@@ -124,12 +124,14 @@ class AccurateController extends Controller
         $session = json_decode($response)->{"session"};
         $host = json_decode($response)->{"host"};
 
-        // $this->addJournalVoucher($accessToken, $session, $host);    
         if (Yii::$app->session->get('inputScope') == "glaccount_save") {
             $this->bulkSaveAccount($accessToken, $session, $host);
         }        
         else if (Yii::$app->session->get('inputScope') == "journal_voucher_save") {
             $this->addJournalVoucher($accessToken, $session, $host);
+        } 
+        else if (Yii::$app->session->get('inputScope') == "journal_voucher_delete") {
+            $this->deleteJournal($accessToken, $session, $host);    
         } 
         // Session::flush();
     }
@@ -142,8 +144,7 @@ class AccurateController extends Controller
             "Content-Type: application/x-www-form-urlencoded"
         ];
 
-        $url = $host . "/accurate/api/glaccount/list.do" ;
-        // $url = $host . "/accurate/api/gl-account/list.do?" . http_build_query($content);
+        $url = $host . "/accurate/api/glaccount/list.do";
 
         $opts = [
             "http" => [
@@ -466,5 +467,51 @@ class AccurateController extends Controller
         // Simpan jumlah sukses dan error ke flash
         // Yii::$app->session->addFlash('success', "{$successCount} account(s) berhasil disimpan.");
         // Yii::$app->session->addFlash('error', "{$errorCount} account(s) gagal disimpan.");
+    }
+
+    private function deleteJournal($accessToken, $session, $host)
+    {
+        // $data = Yii::$app->session->get('journalData');
+        // $id = 2200;
+        // 2197-2202
+        // $ids = [2197, 2198, 2199, 2202]; 2000 - 2299
+        // 999, 1999
+        
+        // set id nya
+        // $ids = range(1, 99);
+        $ids = Yii::$app->session->get('deleteJournalData');
+
+        $header = [
+            "Authorization: Bearer $accessToken",
+            "X-Session-ID: $session",
+            "Content-Type: application/json"
+        ];
+         
+        foreach ($ids as $id) {
+            $url = $host . "/accurate/api/journal-voucher/delete.do?id=" . $id;
+
+            $opts = [
+                "http" => [
+                    "method" => "DELETE",
+                    "header" => $header,
+                    // "content" => json_encode($content),
+                    "ignore_errors" => true,
+                ]
+            ];
+            
+            //delete
+            $context = stream_context_create($opts);
+            $response = file_get_contents($url, false, $context);
+            $result = json_decode($response, true);
+            
+            // var_dump($result); die;
+            if ($result['s']) {
+                Yii::$app->session->setFlash('success', 'Journal deleted successfully.');
+            } else {
+                Yii::$app->session->setFlash('error', 'Failed to delete journal: ' . implode(", ", $result['d']));
+            }
+        }
+
+        return $this->redirect(['/error/journal-errors']);
     }
 } 
