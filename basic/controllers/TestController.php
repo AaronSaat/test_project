@@ -24,3 +24,8 @@ DAN 19 JUGA DARI LAPTOP
 apakah di ignore?
 
 edit baru
+
+DAN 19 yey
+
+LAPTOP JUGA MAU EDIT DI LINE 18
+DAN 19 JUGA DARI LAPTOP
