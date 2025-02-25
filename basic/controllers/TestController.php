@@ -14,3 +14,6 @@ halohlao
 heheheh
 
 coba pull requestttt
+
+SAYA EDIT DI LINE 18
+DAN 19 YEY
