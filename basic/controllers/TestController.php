@@ -15,10 +15,8 @@ heheheh
 
 coba pull requestttt
 
-<<<<<<< Updated upstream
 SAYA EDIT DI LINE 18
 DAN 19 YEY
-=======
+
 LAPTOP JUGA MAU EDIT DI LINE 18
 DAN 19 JUGA DARI LAPTOP
->>>>>>> Stashed changes
