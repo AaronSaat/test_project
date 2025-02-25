@@ -28,7 +28,7 @@ class AccurateController extends Controller
             'client_id' => $this->clientId,
             'response_type' => 'code',
             'redirect_uri' => $this->redirectUri,
-            // 'scope' => 'journal_voucher_delete',
+            // 'scope' => 'glaccount_delete',
             'scope' => Yii::$app->session['inputScope'], 
         ]);
 
@@ -124,6 +124,7 @@ class AccurateController extends Controller
         $session = json_decode($response)->{"session"};
         $host = json_decode($response)->{"host"};
 
+        // $this->deleteAccount($accessToken, $session, $host);    
         if (Yii::$app->session->get('inputScope') == "glaccount_save") {
             $this->bulkSaveAccount($accessToken, $session, $host);
         }        
@@ -136,15 +137,19 @@ class AccurateController extends Controller
         // Session::flush();
     }
 
-    private function getAccount($accessToken, $session, $host)
+    private function getJournal($accessToken, $session, $host)
     {
         $header = [
             "Authorization: Bearer $accessToken",
             "X-SESSION-ID: $session",
-            "Content-Type: application/x-www-form-urlencoded"
         ];
 
-        $url = $host . "/accurate/api/glaccount/list.do";
+        // Content
+        $content = array(
+            "fields" => "id,no,name"
+        );
+
+        $url = $host . "/accurate/api/item/list.do" . http_build_query($content);
 
         $opts = [
             "http" => [
@@ -157,7 +162,7 @@ class AccurateController extends Controller
         $context = stream_context_create($opts);
         $response = file_get_contents($url, false, $context);
 
-        $account = json_decode($response, true);
+        var_dump($response); die;
     }
     private function addJournalVoucher($accessToken, $session, $host)
     {
@@ -478,8 +483,8 @@ class AccurateController extends Controller
         // 999, 1999
         
         // set id nya
-        // $ids = range(1, 99);
-        $ids = Yii::$app->session->get('deleteJournalData');
+        $ids = range(1, 999);
+        // $ids = Yii::$app->session->get('deleteJournalData');
 
         $header = [
             "Authorization: Bearer $accessToken",
@@ -513,5 +518,43 @@ class AccurateController extends Controller
         }
 
         return $this->redirect(['/error/journal-errors']);
+    }
+    private function deleteAccount($accessToken, $session, $host)
+    {
+        // 1, 999
+        $ids = range(1000, 1999);
+
+        $header = [
+            "Authorization: Bearer $accessToken",
+            "X-Session-ID: $session",
+            "Content-Type: application/json"
+        ];
+         
+        foreach ($ids as $id) {
+            $url = $host . "/accurate/api/glaccount/delete.do?id=" . $id;
+
+            $opts = [
+                "http" => [
+                    "method" => "DELETE",
+                    "header" => $header,
+                    // "content" => json_encode($content),
+                    "ignore_errors" => true,
+                ]
+            ];
+            
+            //delete
+            $context = stream_context_create($opts);
+            $response = file_get_contents($url, false, $context);
+            $result = json_decode($response, true);
+            
+            // var_dump($result); die;
+            if ($result['s']) {
+                Yii::$app->session->setFlash('success', 'Account deleted successfully.');
+            } else {
+                Yii::$app->session->setFlash('error', 'Failed to delete Account: ' . implode(", ", $result['d']));
+            }
+        }
+
+        return $this->redirect(['/error/account-errors']);
     }
 } 
