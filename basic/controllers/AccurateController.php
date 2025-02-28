@@ -28,8 +28,8 @@ class AccurateController extends Controller
             'client_id' => $this->clientId,
             'response_type' => 'code',
             'redirect_uri' => $this->redirectUri,
-            // 'scope' => 'glaccount_delete',
-            'scope' => Yii::$app->session['inputScope'], 
+            'scope' => 'journal_voucher_delete',
+            // 'scope' => Yii::$app->session['inputScope'], 
         ]);
 
         return $this->redirect($url);
@@ -124,7 +124,8 @@ class AccurateController extends Controller
         $session = json_decode($response)->{"session"};
         $host = json_decode($response)->{"host"};
 
-        // $this->deleteAccount($accessToken, $session, $host);    
+        // $this->getJournal($accessToken, $session, $host);    
+        $this->deleteJournal($accessToken, $session, $host);    
         if (Yii::$app->session->get('inputScope') == "glaccount_save") {
             $this->bulkSaveAccount($accessToken, $session, $host);
         }        
@@ -138,7 +139,8 @@ class AccurateController extends Controller
     }
 
     private function getJournal($accessToken, $session, $host)
-    {
+    {               
+
         $header = [
             "Authorization: Bearer $accessToken",
             "X-SESSION-ID: $session",
@@ -149,7 +151,8 @@ class AccurateController extends Controller
             "fields" => "id,no,name"
         );
 
-        $url = $host . "/accurate/api/item/list.do" . http_build_query($content);
+        $url = $host . "/accurate/api/item/list.do?" . http_build_query($content);
+        // $url = $host . "/accurate/api/item/detail.do" . $number;
 
         $opts = [
             "http" => [
@@ -164,6 +167,7 @@ class AccurateController extends Controller
 
         var_dump($response); die;
     }
+
     private function addJournalVoucher($accessToken, $session, $host)
     {
         $data = Yii::$app->session->get('journalData');
@@ -195,7 +199,7 @@ class AccurateController extends Controller
         //     ]
         // ];
         
-        $batchSize = 100; // Batasi jumlah data per batch
+        $batchSize = 2; // Batasi jumlah data per batch
         $batches = array_chunk($data, $batchSize);
             
         $header = [
@@ -204,18 +208,21 @@ class AccurateController extends Controller
             "Content-Type: application/json"
         ];
         
+        date_default_timezone_set('Asia/Jakarta');
+
         $uploadPath = Yii::getAlias('@webroot/uploads/logfile/');
         if (!is_dir($uploadPath)) {
             mkdir($uploadPath, 0777, true);
         }
-        $logFile = $uploadPath . 'logfilejournal.txt';
-        if (file_exists($logFile)) {
-            unlink($logFile);
-        }
+        $dateTime = date('Ymd_His'); // Format: YYYYMMDD_HHMMSS
+        $logFile = $uploadPath . "logfilejournal_{$dateTime}.txt";
+        // if (file_exists($logFile)) {
+        //     unlink($logFile);
+        // }
 
         $successCount = 0;
         $errorCount = 0;
-        JournalError::deleteAll();
+        // JournalError::deleteAll();
         
         // $content = ["data" => []];
         foreach ($batches as $batchIndex => $batch) {
@@ -236,7 +243,8 @@ class AccurateController extends Controller
                         "accountNo" => $detail["accountNo"],
                         "amount" => $detail["amount"], 
                         "amountType" => $detail["amountType"],
-                        "memo" => $detail["memo"]
+                        "memo" => $detail["memo"],
+                        "vendorNo" => $detail["vendorNo"]
                     ];
                     
                     if(isset($detail["vendorNo"])){
@@ -331,7 +339,7 @@ class AccurateController extends Controller
         
         $successCount = 0;
         $errorCount = 0;
-        AccountError::deleteAll();
+        // AccountError::deleteAll();
 
         foreach ($batches as $batchIndex => $batch) {
             $cont = [];
@@ -386,7 +394,8 @@ class AccurateController extends Controller
 
     private function logBatchResults($logFile, $batch, $result, $batchNumber, $type)
     {
-        
+        $dateTime = date('Ymd_His'); // Format: YYYYMMDD_HHMMSS
+        file_put_contents($logFile, "Log file created at: " . date('Y-m-d H:i:s') . "\n");
         $logMessages = "Batch #{$batchNumber} - " . date('Y-m-d H:i:s') . "\n";
         $logMessages .= "--------------------------------------------\n";
         //perlu di cek lagi buat ['d']
@@ -462,12 +471,13 @@ class AccurateController extends Controller
             if (!is_dir($uploadPath)) {
                 mkdir($uploadPath, 0777, true);
             }
-            $logFileRaw = $uploadPath . 'logfilejournal_raw.txt';
-            if (file_exists($logFileRaw)) {
-                unlink($logFileRaw);
-            }
-            file_put_contents($logFileRaw, $resultString, FILE_APPEND);
-            file_put_contents($logFile, $logMessages, FILE_APPEND);
+            $dateTime = date('Ymd_His'); // Format: YYYYMMDD_HHMMSS
+            $logFile = $uploadPath . "logfilejournal{$dateTime}.txt";
+            // if (file_exists($logFileRaw)) {
+            //     unlink($logFileRaw);
+            // }
+            // file_put_contents($logFile, $resultString);
+            file_put_contents($logFile, $logMessages);
         }
         // Simpan jumlah sukses dan error ke flash
         // Yii::$app->session->addFlash('success', "{$successCount} account(s) berhasil disimpan.");
@@ -481,9 +491,10 @@ class AccurateController extends Controller
         // 2197-2202
         // $ids = [2197, 2198, 2199, 2202]; 2000 - 2299
         // 999, 1999
+        // 3304 - 3953
         
         // set id nya
-        $ids = range(1, 999);
+        $ids = range(3954, 7.969);
         // $ids = Yii::$app->session->get('deleteJournalData');
 
         $header = [
@@ -509,7 +520,7 @@ class AccurateController extends Controller
             $response = file_get_contents($url, false, $context);
             $result = json_decode($response, true);
             
-            // var_dump($result); die;
+            // var_dump($resu/lt); die;
             if ($result['s']) {
                 Yii::$app->session->setFlash('success', 'Journal deleted successfully.');
             } else {

@@ -40,15 +40,39 @@ class ApiController extends Controller
 
     public function actionJournalIndex()
     {
-        $query = Journal::find();
+
+        // // $query = JournalCompare::find();
+        // $query = JournalCompare::find()->limit(100); 
+        // ganti 51000
+        $query = JournalCompare::find()->limit(20000);
+
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
             'pagination' => [
-                'pageSize' => 100, 
+                'pageSize' => 1000,
+                // 'pagination' => false,
             ],
         ]);
 
         return $this->render('journalindex', [
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    public function actionViewDetailJournalIndex($id)
+    {
+        $journalCompare = JournalCompare::findOne($id);
+        $number = $journalCompare->number;
+
+        $dataProvider = new ActiveDataProvider([
+            'query' => DetailCompare::find()->where(['number' => $number]),
+            // 'pagination' => [
+            //     'pageSize' => 200, 
+            // ],
+        ]);
+
+        return $this->render('viewdetailjournalindex', [
+            'journalCompare' => $journalCompare,
             'dataProvider' => $dataProvider,
         ]);
     }
@@ -69,7 +93,7 @@ class ApiController extends Controller
                 }
 
                 //hapus semua dulu lalu input ulang
-                AccountCompare::deleteAll();
+                // AccountCompare::deleteAll();
 
                 // Simpan file di direktori
                 $filePath = $uploadPath . $model->file->name;
@@ -186,6 +210,8 @@ class ApiController extends Controller
             'model' => $model,
         ]);
     }
+
+    //ini untuk proses lama, yang baru menggunakan function sendJournalApi
     public function actionJsonUploadJurnalIndex()
     {
         $model = new JsonUploadForm();
@@ -206,8 +232,8 @@ class ApiController extends Controller
                 $journalDetailFilePath = $uploadPath . $model->journalDetailFile->name;
 
                 //hapus semua dulu lalu input ulang
-                JournalCompare::deleteAll();
-                DetailCompare::deleteAll();
+                // JournalCompare::deleteAll();
+                // DetailCompare::deleteAll();
 
                 if ($model->journalFile->saveAs($journalFilePath) && $model->journalDetailFile->saveAs($journalDetailFilePath)) {
                     // Decode kedua file
@@ -225,7 +251,8 @@ class ApiController extends Controller
 
                             $journalCompare = new JournalCompare();
                             $journalCompare->number = $journal['JVNUMBER'];
-                            $journalCompare->trans_date = date('d/m/Y', strtotime($journal['TRANSDATE']));
+                            $journalCompare->transDate = date('d/m/Y', strtotime($journal['TRANSDATE']));
+                            $journalCompare->description = $journal['TRANSDESCRIPTION'];
                             $journalCompare->branchName = $journal['BRANCHCODE'];
                             $journalCompare->save();
                             
@@ -1819,11 +1846,13 @@ class ApiController extends Controller
                                 }
 
                                 $detailCompare->number = $journal['JVNUMBER'];
-                                $detailCompare->trans_date = date('Y-m-d', strtotime($journal['TRANSDATE'])); // Pastikan format tanggal sesuai dengan kolom di database
-                                $detailCompare->account_no = $accountMap;
-                                $detailCompare->account_ori = $detail['GLACCOUNT'];
+                                $detailCompare->transDate = date('Y-m-d', strtotime($journal['TRANSDATE'])); // Pastikan format tanggal sesuai dengan kolom di database
+                                $detailCompare->accountNo = $accountMap;
+                                $detailCompare->accountOri = $detail['GLACCOUNT'];
                                 $detailCompare->amount = (double)(str_replace('-', '', $detail['GLAMOUNT']));
-                                $detailCompare->amount_type = isset($detail['SEQ']) && $detail['SEQ'] == 1 ? 'CREDIT' : 'DEBIT';
+                                $detailCompare->amountType = isset($detail['SEQ']) && $detail['SEQ'] == 1 ? 'CREDIT' : 'DEBIT';
+                                $detailCompare->memo = $detail['DESCRIPTION'];
+                                $detailCompare->vendorNo = $detail['SUBSIDIARY'] ?? "";
                                 $detailCompare->save();
                             }                   
                         }
@@ -1836,10 +1865,11 @@ class ApiController extends Controller
                         Yii::$app->session->set('importJournalFromJson', $filteredData);
                         Yii::$app->session->setFlash('success', "Files successfully uploaded and processed.");
 
+                        return $this->redirect(['journal-index']);
                         // Render view untuk menampilkan tabel atau cek hasil
-                        return $this->render('jsonuploadjournaltable', [
-                            'filteredData' => $filteredData,
-                        ]);
+                        // return $this->render('jsonuploadjournaltable', [
+                        //     'filteredData' => $filteredData,
+                        // ]);
                     } else {
                         Yii::$app->session->setFlash('error', 'Invalid JSON format. Expected keys "JV" and "JVDET".');
                     }
@@ -1870,26 +1900,23 @@ class ApiController extends Controller
     }
     public function actionSendjournalapi() 
     {
-        // $selectedIds = Yii::$app->request->post('selection', []);
-        // $journal = Journal::find()->where(['id' => $selectedIds])->all();
-        // $journals = Journal::find()->andWhere(['in', 'id', $selectedIds])->asArray()->all();
-
-        // foreach ($journal as $journalprint) {
-        //     var_dump($journalprint->attributes); // Menampilkan semua atribut dari model
+        $selectedIds = Yii::$app->request->post('selection', []);
+        $journals = JournalCompare::find()->andWhere(['in', 'id', $selectedIds])->asArray()->all();
+        
+        // foreach ($journals as $journalprint) {
+        //     echo "<pre>";
+        //     var_dump($journalprint); 
+        //     echo "</pre>";
         // }
-        // exit; // Menghentikan eksekusi untuk melihat hasil
+        // exit; 
 
-        $journals = Yii::$app->session->get('importJournalFromJson', []);
-
-        // $journals = Journalumum::find()
-        // ->with('journaldetail') // Menggunakan relasi ke detail
-        // ->asArray()
-        // ->all();
+        //ini kalo cara lama
+        // $journals = Yii::$app->session->get('importJournalFromJson', []);
 
         // Siapkan struktur data untuk API
         $formattedData = [];
         foreach ($journals as $journal) {
-            // Format data utama
+            $number = $journal['number'];
             $journalData = [
                 'number' => $journal['number'],
                 'transDate' => $journal['transDate'],
@@ -1897,20 +1924,26 @@ class ApiController extends Controller
                 'branchName' => $journal['branchName'],
                 'detailJournalVoucher' => [],
             ];
-
+            
+            $details = DetailCompare::find()->where(['number' => $number])->all();
             // Tambahkan detail jurnal
-            foreach ($journal['journaldetail'] as $detail) {
+            foreach ($details as $detail) {
                 $journalData['detailJournalVoucher'][] = [
-                    'accountNo' => $detail['accountNo'],
-                    'amount' => $detail['amount'],
-                    'amountType' => $detail['amountType'],
-                    'memo' => $detail['memo'],
-                    'vendorNo' => $detail['vendorNo'],
+                    'accountNo' => $detail->accountNo, 
+                    'amount' => $detail->amount,
+                    'amountType' => $detail->amountType,
+                    'memo' => $detail->memo, 
+                    'vendorNo' => $detail->vendorNo, 
                 ];
             }
 
             $formattedData[] = $journalData;
         }
+
+        // echo "<pre>";
+        // var_dump($formattedData); 
+        // echo "</pre>";
+        // exit;
         
         Yii::$app->session->set('journalData', $formattedData);
         Yii::$app->session->set('inputScope', "journal_voucher_save");
@@ -2004,6 +2037,78 @@ class ApiController extends Controller
 
         // Redirect ke halaman lain setelah proses selesai
         return $this->redirect(['api/journal-index']);
+    }
+    public function actionFilldatabasewithjournal(){
+        for ($jurnal=1; $jurnal<=51000; $jurnal++){
+            //simpan dulu journal numbernya
+            $journalNumber = sprintf("TEST%05d", $jurnal);
+            //randomize tanggal
+            $startDate = strtotime('2016-01-01');
+            $endDate = time(); // Waktu sekarang
+            $randomTimestamp = mt_rand($startDate, $endDate);
+
+            $journalCompare = new JournalCompare();
+            $journalCompare->number = $journalNumber; 
+            $journalCompare->trans_date = date('d/m/Y', $randomTimestamp);
+            $branchNames = ["Yayasan SAAT", "STT SAAT"];
+            $journalCompare->branchName = $branchNames[array_rand($branchNames)];
+            $journalCompare->save();
+
+            $accountRandom = [            
+                '1000',
+                '1001',
+                '1001.01',
+                '1001.02',
+                '1001.03', //pindah
+                '1001.04',
+                '1001.05', //pindah
+                '1001.06',
+                '1001.07', //pindah
+                '1001.08',
+            ];
+            $accountNoOri = $accountRandom[array_rand($accountRandom)];
+                    
+            //pemetaan belum dipake
+            $accountMapping = [            
+                '1000' => '1-1000',
+                '1001' => '1-1001',
+                '1001.01' => '1-1001.01',
+                '1001.02' => '1-1001.02',
+                '1001.03' => '1-1001.02', //pindah
+                '1001.04' => '1-1001.03',
+                '1001.05' => '1-1001.02', //pindah
+                '1001.06' => '1-1001.04',
+                '1001.07' => '1-1001.02', //pindah
+                '1001.08' => '1-1001.05',
+            ];
+            if (isset($accountMapping[$accountNoOri])) {
+                $accountMap = $accountMapping[$accountNoOri];
+            }
+            
+            $jumlah_kredit = 0;
+            for($detail=1; $detail<50; $detail++) {
+                //masukkan debit dulu
+                $jumlah_debit = mt_rand(1000, 5000);
+                $jumlah_kredit += $jumlah_debit;
+
+                $detailCompare = new DetailCompare();
+                $detailCompare->number = $journalNumber;
+                $detailCompare->trans_date = date('Y-m-d', $randomTimestamp); 
+                $detailCompare->account_ori = $accountNoOri;
+                $detailCompare->amount = $jumlah_debit;
+                $detailCompare->amount_type = 'DEBIT';
+                $detailCompare->save();
+            }
+
+            //masukkan kreditnya
+            $detailCompare = new DetailCompare();
+            $detailCompare->number = $journalNumber;
+            $detailCompare->trans_date = date('Y-m-d', $randomTimestamp); 
+            $detailCompare->account_ori = $accountNoOri;
+            $detailCompare->amount = $jumlah_kredit;
+            $detailCompare->amount_type = 'CREDIT';
+            $detailCompare->save();
+        }
     }
 }
 

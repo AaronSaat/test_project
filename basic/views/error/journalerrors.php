@@ -59,6 +59,7 @@ $this->params['breadcrumbs'][] = $this->title;
         ],
         'number',
         'response',
+        'created_at',
         [
             'class' => 'yii\grid\ActionColumn',
             'template' => '{view-journal}',
