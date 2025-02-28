@@ -6,7 +6,7 @@ use yii\grid\GridView;
 /* @var $journalError app\models\JournalError */
 /* @var $detailCompareData app\models\DetailCompare[] */
 
-$this->title = "Detail Jurnal untuk Number: " . $journalError->number;
+$this->title = "Detail Jurnal untuk Number: " . $journalCompare->number;
 $this->params['breadcrumbs'][] = ['label' => 'Journal Errors', 'url' => ['journal-errors']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
@@ -16,16 +16,16 @@ $this->params['breadcrumbs'][] = $this->title;
 <!-- Tampilkan Detail Jurnal Error -->
 <table class="table table-bordered">
     <tr>
-        <th>Info</th>
-        <td><?= Html::encode($journalError->info) ?></td>
+        <th>Id</th>
+        <td><?= Html::encode($journalCompare->id) ?></td>
     </tr>
     <tr>
         <th>Number</th>
-        <td><?= Html::encode($journalError->number) ?></td>
+        <td><?= Html::encode($journalCompare->number) ?></td>
     </tr>
     <tr>
-        <th>Response</th>
-        <td><?= Html::encode($journalError->response) ?></td>
+        <th>Transaction Date</th>
+        <td><?= Html::encode($journalCompare->transDate) ?></td>
     </tr>
     <tr>
         <th>Branch Name</th>
@@ -52,5 +52,5 @@ $this->params['breadcrumbs'][] = $this->title;
 ]); ?>
 
 <p>
-    <?= Html::a('Kembali', ['journal-errors'], ['class' => 'btn btn-secondary']) ?>
+    <?= Html::a('Kembali', ['journal-index'], ['class' => 'btn btn-secondary']) ?>
 </p>

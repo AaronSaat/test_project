@@ -41,10 +41,10 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         'items' => [
             // ['label' => 'Home', 'url' => ['/site/index']],
             // ['label' => 'Send Pos Akun', 'url' => ['/api/index']],
-            // ['label' => 'Send Jurnal Detail', 'url' => ['/api/journal-index']],
-            ['label' => 'Upload JSON - Account', 'url' => ['/api/json-upload-index']],
+            ['label' => 'Send Jurnal Detail', 'url' => ['/api/journal-index']],
+            // ['label' => 'Upload JSON - Account', 'url' => ['/api/json-upload-index']],
             ['label' => 'Upload JSON - Journal Detail', 'url' => ['/api/json-upload-jurnal-index']],
-            ['label' => 'Account Error Log', 'url' => ['/error/account-errors']],
+            // ['label' => 'Account Error Log', 'url' => ['/error/account-errors']],
             ['label' => 'Journal Error Log', 'url' => ['/error/journal-errors']],
             // Yii::$app->user->isGuest
             //     ? ['label' => 'Login', 'url' => ['/site/login']]

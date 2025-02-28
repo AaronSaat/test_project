@@ -9,7 +9,8 @@ use Yii;
  *
  * @property int $id
  * @property string|null $number
- * @property string|null $trans_date
+ * @property string|null $transDate
+ * @property string|null $description
  * @property string|null $branchName
  */
 class Journalcompare extends \yii\db\ActiveRecord
@@ -28,7 +29,7 @@ class Journalcompare extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['number', 'trans_date', 'branchName'], 'string', 'max' => 255],
+            [['number', 'transDate', 'description', 'branchName'], 'string', 'max' => 255],
         ];
     }
 
@@ -40,7 +41,8 @@ class Journalcompare extends \yii\db\ActiveRecord
         return [
             'id' => 'ID',
             'number' => 'Number',
-            'trans_date' => 'Trans Date',
+            'transDate' => 'Trans Date',
+            'description' => 'Description',
             'branchName' => 'Branch Name',
         ];
     }

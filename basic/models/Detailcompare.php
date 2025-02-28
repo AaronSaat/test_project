@@ -9,11 +9,14 @@ use Yii;
  *
  * @property int $id
  * @property string|null $number
- * @property string|null $trans_date
- * @property string|null $account_no
+ * @property string|null $transDate
+ * @property string|null $accountNo
  * @property float|null $amount
- * @property string|null $amount_type
+ * @property string|null $amountType
  * @property string $created_at
+ * @property string|null $accountOri
+ * @property string|null $memo
+ * @property string|null $vendorNo
  */
 class Detailcompare extends \yii\db\ActiveRecord
 {
@@ -33,7 +36,7 @@ class Detailcompare extends \yii\db\ActiveRecord
         return [
             [['amount'], 'number'],
             [['created_at'], 'safe'],
-            [['number', 'trans_date', 'account_no', 'account_ori', 'amount_type'], 'string', 'max' => 255],
+            [['number', 'transDate', 'accountNo', 'amountType', 'accountOri', 'memo', 'vendorNo'], 'string', 'max' => 255],
         ];
     }
 
@@ -45,12 +48,14 @@ class Detailcompare extends \yii\db\ActiveRecord
         return [
             'id' => 'ID',
             'number' => 'Number',
-            'trans_date' => 'Trans Date',
-            'account_no' => 'Account No (Setelah dipetakan)',
-            'account_ori' => 'Account Ori',
+            'transDate' => 'Trans Date',
+            'accountNo' => 'Account No',
             'amount' => 'Amount',
-            'amount_type' => 'Amount Type',
+            'amountType' => 'Amount Type',
             'created_at' => 'Created At',
+            'accountOri' => 'Account Ori',
+            'memo' => 'Memo',
+            'vendorNo' => 'Vendor No',
         ];
     }
 }

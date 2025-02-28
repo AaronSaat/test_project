@@ -11,6 +11,7 @@ use Yii;
  * @property string|null $info
  * @property string|null $number
  * @property string|null $response
+ * @property string $created_at
  */
 class Journalerror extends \yii\db\ActiveRecord
 {
@@ -28,6 +29,7 @@ class Journalerror extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
+            [['created_at'], 'safe'],
             [['info', 'number', 'response'], 'string', 'max' => 255],
         ];
     }
@@ -42,6 +44,7 @@ class Journalerror extends \yii\db\ActiveRecord
             'info' => 'Info',
             'number' => 'Number',
             'response' => 'Response',
+            'created_at' => 'Created At',
         ];
     }
 }

@@ -23,41 +23,25 @@ $form = ActiveForm::begin([
 <?= GridView::widget([
     'dataProvider' => $dataProvider,
     'columns' => [
-        ['class' => 'yii\grid\CheckboxColumn'], // Checkbox untuk memilih data
-
+        ['class' => 'yii\grid\CheckboxColumn'],
         'id',             
         'number',        
-        'transDate',      
-        'description',      
-        'accountNo',      
-        'amount',      
-        'amountType',      
-        'memo',      
+        'description',        
+        'transDate',        
+        'branchName', 
         [
             'class' => 'yii\grid\ActionColumn',
-            // 'template' => '{send-to-api}',
-            // 'buttons' => [
-            //     'send-to-api' => function ($url, $model, $key) {
-            //         return Html::a('Send API', ['api/sendjournalapi', 'id' => $model->id], [
-            //             'class' => 'btn btn-success btn-sm',
-            //             'data-method' => 'post',
-            //             'data-confirm' => 'Are you sure you want to send this data to API Accurate Online?',
-            //         ]);
-            //     },
-            // ],
+            'template' => '{view-journal}',
+            'buttons' => [
+                'view-journal' => function ($url, $model) {
+                    return Html::a('Lihat Detail Jurnal', ['view-detail-journal-index', 'id' => $model->id], [
+                        'class' => 'btn btn-primary btn-sm',
+                    ]);
+                },
+            ],
         ],
     ],
 ]); ?>
-
-<div class="pagination-container">
-        <?= \yii\widgets\LinkPager::widget([
-            'pagination' => $dataProvider->pagination,
-            'options' => ['class' => 'pagination justify-content-center'], // Bootstrap classes for styling
-            'linkOptions' => ['class' => 'page-link'], // Bootstrap class for links
-            'activePageCssClass' => 'active', // Active page class
-            'disabledPageCssClass' => 'disabled', // Disabled page class
-        ]); ?>
-    </div>
 
 <div class="form-group">
     <?= Html::submitButton('Send Selected to API', [

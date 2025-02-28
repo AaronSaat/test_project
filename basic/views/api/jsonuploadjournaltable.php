@@ -12,8 +12,7 @@ $this->params['breadcrumbs'][] = $this->title;
     -> Detail yang menggunakan pos akun <b>2000.05 Hutang PPh 23/Jasa</b> akan dimasukkan data pemasoknya yaitu Pemasok Umum (ID = 1000) <br>
     -> <b>accountNo dan accountOri yang diberi warna merah</b> adalah detail jurnal dengan pemetaan pos akun, dengan keterangan berikut: <br>
     <ul>
-        <li>Pos Akun 1002.01, 1002.03 => 1002.00</li>
-        <li>Pos Akun 6202.01, 6202.02 => 6202.00</li>
+        <li>Insert Pemetaan</li>
     </ul>
     -> jika tidak diberi warna merah, maka tidak dilakukan pemetaan<br>
 </p>
