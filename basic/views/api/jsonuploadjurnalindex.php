@@ -18,7 +18,6 @@ $this->params['breadcrumbs'][] = $this->title;
 
 <div class="form-group">
     <?= $form->field($model, 'journalFile')->fileInput()->label('Upload Journal File') ?>
-    <?= $form->field($model, 'journalDetailFile')->fileInput()->label('Upload Journal Detail File') ?>
 </div>
 
 <div class="form-group">

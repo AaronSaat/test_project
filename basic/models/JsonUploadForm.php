@@ -18,7 +18,8 @@ class JsonUploadForm extends Model
     {
         return [
             [['file'], 'file', 'extensions' => 'json', 'skipOnEmpty' => false],
-            [['journalFile', 'journalDetailFile'], 'file', 'skipOnEmpty' => false, 'extensions' => 'json', 'maxSize' => 50 * 1024 * 1024, 'checkExtensionByMimeType' => false],
+            // [['journalFile', 'journalDetailFile'], 'file', 'skipOnEmpty' => false, 'extensions' => 'json', 'maxSize' => 50 * 1024 * 1024, 'checkExtensionByMimeType' => false],
+            [['journalFile'], 'file', 'extensions' => 'json', 'maxSize' => 50 * 1024 * 1024, 'checkExtensionByMimeType' => false],
         ];
     }
 
