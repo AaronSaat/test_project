@@ -40,7 +40,6 @@ class ApiController extends Controller
 
     public function actionJournalIndex()
     {
-
         // // $query = JournalCompare::find();
         // $query = JournalCompare::find()->limit(100); 
         // ganti 51000
@@ -49,7 +48,7 @@ class ApiController extends Controller
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
             'pagination' => [
-                'pageSize' => 1000,
+                'pageSize' => 300,
                 // 'pagination' => false,
             ],
         ]);
@@ -76,6 +75,7 @@ class ApiController extends Controller
             'dataProvider' => $dataProvider,
         ]);
     }
+
 
     public function actionJsonUploadIndex()
     {
@@ -235,22 +235,33 @@ class ApiController extends Controller
 
                 if ($model->journalFile->saveAs($journalFilePath)) {
                     // Decode kedua file
-                    $journalData = json_decode(file_get_contents($journalFilePath), true);
+                    $journalData = json_decode(file_get_contents($journalFilePath), true);  
 
                     if (isset($journalData['JV'])) {
-                        $filteredData = [];
-
+                        $groupedJournals = [];
+                    
                         foreach ($journalData['JV'] as $journal) {
-                            $journalCompare = new JournalCompare();
-                            $journalCompare->number = $journal['JVNUMBER'];
-                            $journalCompare->transDate = date('d/m/Y', strtotime($journal['TRANSDATE']));
-                            $journalCompare->description = $journal['TRANSDESCRIPTION'];
-                            $journalCompare->branchName = $journal['BRANCHCODE'];
-                            $journalCompare->save();
-                        
-                            $hasChanged = false;
-                            $accountNoOri = $journal['GLACCOUNT'];
-
+                            $JVNUMBER = $journal['JVNUMBER'];
+                    
+                            if (!isset($groupedJournals[$JVNUMBER])) {
+                                // Buat jurnal hanya sekali per JVNUMBER
+                                $groupedJournals[$JVNUMBER] = [
+                                    'number' => $JVNUMBER,
+                                    'transDate' => date('d/m/Y', strtotime($journal['TRANSDATE'])),
+                                    'description' => $journal['TRANSDESCRIPTION'],
+                                    'branchName' => $journal['BRANCHCODE'],
+                                    'journaldetail' => []
+                                ];
+                    
+                                // Simpan di database JournalCompare
+                                $journalCompare = new JournalCompare();
+                                $journalCompare->number = $JVNUMBER;
+                                $journalCompare->transDate = date('d/m/Y', strtotime($journal['TRANSDATE']));
+                                $journalCompare->description = $journal['TRANSDESCRIPTION'];
+                                $journalCompare->branchName = $journal['BRANCHCODE'];
+                                $journalCompare->save();
+                            }
+                            
                             $accountMapping = [            
                                 '1000' => '1-1000',
                                 '1001' => '1-1001',
@@ -390,7 +401,7 @@ class ApiController extends Controller
                                 '1710.03.18' => '1-1710.03.18',
                                 '1710.03.19' => '1-1710.03.19',
                                 '1710.04' => '1-1710.04',
-                                '2000' => '2-2000',
+                                '2000.05' => '2-2000',
                                 '2300' => '2-2300',
                                 '2300.01' => '2-2300.01',
                                 '2300.02' => '2-2300.02',
@@ -711,31 +722,32 @@ class ApiController extends Controller
                                 '7200.02' => '7-7200.02',
                                 '7200.03' => '7-7200.03',
                             ];
-                        
-                            // Pemetaan kode akun berdasarkan aturan yang diberikan
+
+                            // Pemetaan kode akun
+                            $accountNoOri = $journal['GLACCOUNT'];
+                            $hasChanged = false;
+                    
                             if (isset($accountMapping[$accountNoOri])) {
                                 $journal['GLACCOUNT'] = $accountMapping[$accountNoOri];
                                 $hasChanged = true;
                             }
-                        
-                            $filteredData[] = [
-                                'number' => $journal['JVNUMBER'],
-                                'transDate' => date('d/m/Y', strtotime($journal['TRANSDATE'])),
-                                'description' => $journal['TRANSDESCRIPTION'],
-                                'branchName' => $journal['BRANCHCODE'],
-                                'journaldetail' => [
-                                    'accountNo' => $journal['GLACCOUNT'],
-                                    'accountOri' => $accountNoOri,
-                                    'amount' => (double)(str_replace('-', '', $journal['GLAMOUNT'])),
-                                    'amountType' => isset($journal['SEQ']) && $journal['SEQ'] == 1 ? 'CREDIT' : 'DEBIT',
-                                    'memo' => $journal['DESCRIPTION'],
-                                    'vendorNo' => ($journal['GLACCOUNT'] == '2-2000') ? '1000' : ($journal['SUBSIDIARY'] ?? ""),
-                                    'hasChanged' => $hasChanged
-                                ]
+                    
+                            // Tambahkan detail ke jurnal terkait
+                            $groupedJournals[$JVNUMBER]['journaldetail'][] = [
+                                'accountNo' => $journal['GLACCOUNT'],
+                                'accountOri' => $accountNoOri,
+                                'amount' => (double)(str_replace('-', '', $journal['GLAMOUNT'])),
+                                'amountType' => isset($journal['SEQ']) && $journal['SEQ'] == 1 ? 'CREDIT' : 'DEBIT',
+                                'memo' => $journal['DESCRIPTION'],
+                                'vendorNo' => ($journal['SUBSIDIARY'] == 2 && isset($accountMapping[$journal['GLACCOUNT']]) && $accountMapping[$journal['GLACCOUNT']] == '2-2000') 
+                                ? '1000' 
+                                : (!empty($journal['SUBSIDIARY']) ? (string) $journal['SUBSIDIARY'] : "0"),
+                                'hasChanged' => $hasChanged
                             ];
-                        
+                    
+                            // Simpan detail di database DetailCompare
                             $detailCompare = new DetailCompare();
-                            $detailCompare->number = $journal['JVNUMBER'];
+                            $detailCompare->number = $JVNUMBER;
                             $detailCompare->transDate = date('Y-m-d', strtotime($journal['TRANSDATE']));
                             $detailCompare->accountNo = $journal['GLACCOUNT'];
                             $detailCompare->accountOri = $accountNoOri;
@@ -745,21 +757,27 @@ class ApiController extends Controller
                             $detailCompare->vendorNo = $journal['SUBSIDIARY'] ?? "";
                             $detailCompare->save();
                         }
-                        
-                        // echo "<pre>";
-                        // print_r($filteredData);
-                        // echo "</pre>";
-                        // exit;
 
-                        Yii::$app->session->set('importJournalFromJson', $filteredData);
+                        // Konversi array detail menjadi daftar yang bersih
+                        foreach ($groupedJournals as $JVNUMBER => &$journal) {
+                            $journal['journaldetail'] = array_values($journal['journaldetail']);
+                        }
+                    
+                        // Simpan ke sesi untuk diproses lebih lanjut
+                        Yii::$app->session->set('importJournalFromJson', array_values($groupedJournals));
                         Yii::$app->session->setFlash('success', "Files successfully uploaded and processed.");
-
-                        return $this->redirect(['journal-index']);
+                        // return $this->redirect(['journal-index']);
+                        return $this->redirect(['sendjournalapi']);
+                        // echo "<pre>";
+                            // print_r($filteredData);
+                            // echo "</pre>";
+                            // exit;
                         // Render view untuk menampilkan tabel atau cek hasil
-                        // return $this->render('jsonuploadjournaltable', [
-                        //     'filteredData' => $filteredData,
-                        // ]);
-                    } else {
+                            // return $this->render('jsonuploadjournaltable', [
+                            //     'filteredData' => $filteredData,
+                            // ]);
+                    }
+                     else {
                         Yii::$app->session->setFlash('error', 'Invalid JSON format.');
                     }
                 } else {
@@ -789,6 +807,7 @@ class ApiController extends Controller
     }
     public function actionSendjournalapi() 
     {
+        // var_dump("masuk");die;
         $selectedIds = Yii::$app->request->post('selection', []);
         $journals = JournalCompare::find()->andWhere(['in', 'id', $selectedIds])->asArray()->all();
         
@@ -837,7 +856,7 @@ class ApiController extends Controller
         Yii::$app->session->set('journalData', $formattedData);
         Yii::$app->session->set('inputScope', "journal_voucher_save");
         
-        return $this->redirect(['accurate/authorize']);
+        return $this->redirect(['accurate/authorize', 'batchIndex' => 0]);
     }
 
     public function actionDeletealljournalapi() 

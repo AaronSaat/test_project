@@ -22,14 +22,16 @@ class AccurateController extends Controller
         $this->redirectUri = $params['redirect_uri'];
     }
 
-    public function actionAuthorize()
-    {
+    public function actionAuthorize($batchIndex)
+    {   
+        Yii::$app->session->set('batchIndex', $batchIndex);
+
         $url = "https://account.accurate.id/oauth/authorize?" . http_build_query([
             'client_id' => $this->clientId,
             'response_type' => 'code',
             'redirect_uri' => $this->redirectUri,
-            'scope' => 'journal_voucher_delete',
-            // 'scope' => Yii::$app->session['inputScope'], 
+            // 'scope' => 'journal_voucher_delete',
+            'scope' => Yii::$app->session['inputScope']
         ]);
 
         return $this->redirect($url);
@@ -66,6 +68,7 @@ class AccurateController extends Controller
         $response = file_get_contents($url, false, $context);
 
         $json = json_decode($response);
+        // var_dump($json);die;
         $accessToken = $json->{"access_token"};
         $refreshToken = $json->{"refresh_token"};
         $this->getDatabaseList($accessToken);
@@ -125,12 +128,13 @@ class AccurateController extends Controller
         $host = json_decode($response)->{"host"};
 
         // $this->getJournal($accessToken, $session, $host);    
-        $this->deleteJournal($accessToken, $session, $host);    
+        // $this->deleteJournal($accessToken, $session, $host);    
         if (Yii::$app->session->get('inputScope') == "glaccount_save") {
             $this->bulkSaveAccount($accessToken, $session, $host);
         }        
         else if (Yii::$app->session->get('inputScope') == "journal_voucher_save") {
-            $this->addJournalVoucher($accessToken, $session, $host);
+            $batchIndex = Yii::$app->session->get('batchIndex');
+            $this->actionAddJournalVoucher($accessToken, $session, $host, $batchIndex);
         } 
         else if (Yii::$app->session->get('inputScope') == "journal_voucher_delete") {
             $this->deleteJournal($accessToken, $session, $host);    
@@ -165,12 +169,16 @@ class AccurateController extends Controller
         $context = stream_context_create($opts);
         $response = file_get_contents($url, false, $context);
 
-        var_dump($response); die;
+        // var_dump($response); die;
     }
 
-    private function addJournalVoucher($accessToken, $session, $host)
-    {
+    public function actionAddJournalVoucher($accessToken, $session, $host, $batchIndex)
+    {   
         $data = Yii::$app->session->get('journalData');
+        // $accessToken = Yii::$app->session->get('accessToken');
+        // $session = Yii::$app->session->get('session');
+        // $host = Yii::$app->session->get('host');
+
         // $data = [
         //     [
         //         "number" => "TEST_001_INPUT_VENDOR",
@@ -199,9 +207,17 @@ class AccurateController extends Controller
         //     ]
         // ];
         
-        $batchSize = 2; // Batasi jumlah data per batch
+        $batchSize = 100; // Batasi jumlah data per batch
         $batches = array_chunk($data, $batchSize);
-            
+        $totalBatch = count($batches);
+        // var_dump($totalBatch);die;
+        
+        // titik berhenti rekursi
+        if ($batchIndex == $totalBatch) {
+            Yii::$app->session->setFlash('success', 'Semua jurnal berhasil dikirim.');
+            return $this->redirect(['/error/journal-errors']); // Redirect ke halaman sukses
+        }
+
         $header = [
             "Authorization: Bearer $accessToken",
             "X-Session-ID: $session",
@@ -216,89 +232,69 @@ class AccurateController extends Controller
         }
         $dateTime = date('Ymd_His'); // Format: YYYYMMDD_HHMMSS
         $logFile = $uploadPath . "logfilejournal_{$dateTime}.txt";
-        // if (file_exists($logFile)) {
-        //     unlink($logFile);
-        // }
 
-        $successCount = 0;
-        $errorCount = 0;
+        // Hitung waktu eksekusi sebelum batch dijalankan
+        $startTime = microtime(true);
+        $maxExecutionTime = ini_get('max_execution_time');
+
+        $batch = $batches[$batchIndex];
+        $content = ["data" => []];
+
         // JournalError::deleteAll();
-        
-        // $content = ["data" => []];
-        foreach ($batches as $batchIndex => $batch) {
-            $content = ["data" => []];
-            foreach ($batch as $journalIndex  => $journal) {
-                // Format header journal
-                $content["data"][$journalIndex ] = [
-                    "number" => $journal["number"],
-                    "transDate" => $journal["transDate"],
-                    "description" => $journal["description"],
-                    "branchName" => $journal["branchName"],
-                    "detailJournalVoucher" => []
-                ];
-
-                // Format detail journal voucher
-                foreach ($journal["detailJournalVoucher"] as $detailIndex => $detail) { 
-                    $content["data"][$journalIndex ]["detailJournalVoucher"][$detailIndex] = [
-                        "accountNo" => $detail["accountNo"],
-                        "amount" => $detail["amount"], 
-                        "amountType" => $detail["amountType"],
-                        "memo" => $detail["memo"],
-                        "vendorNo" => $detail["vendorNo"]
-                    ];
-                    
-                    if(isset($detail["vendorNo"])){
-                        $content["data"][$journalIndex]["detailJournalVoucher"][$detailIndex]["vendorNo"] = "1000";
-                        $content["data"][$journalIndex]["detailJournalVoucher"][$detailIndex]["subsidiaryType"] = "VENDOR";
-                    }
-
-                    
-                    // $detail["vendorNo"] ? array_push($content["data"][$journalIndex ]["detailJournalVoucher"][$detailIndex], ["vendorNo" => $detail["vendorNo"]]) : 0;
-                }
-            }
-
-            $url = $host . "/accurate/api/journal-voucher/bulk-save.do";
-
-            $opts = [
-                "http" => [
-                    "method" => "POST",
-                    "header" => $header,
-                    "content" => json_encode($content),
-                    "ignore_errors" => true,
-                ]
+        foreach ($batch as $journalIndex => $journal) {
+            $content["data"][$journalIndex] = [
+                "number" => $journal["number"],
+                "transDate" => $journal["transDate"],
+                "description" => $journal["description"],
+                "branchName" => $journal["branchName"],
+                "detailJournalVoucher" => []
             ];
-
-            if (isset($result['d']) && is_array($result['d'])) {
-                foreach ($result['d'] as $item) {
-                    $message = $item['d'] ?? '';
-                    if (is_string($message) && strpos($message, 'berhasil disimpan') !== false) {
-                        $successCount++;
-                    } else {
-                        $errorCount++;
-                    }                    
+    
+            foreach ($journal["detailJournalVoucher"] as $detailIndex => $detail) {
+                $content["data"][$journalIndex]["detailJournalVoucher"][$detailIndex] = [
+                    "accountNo" => $detail["accountNo"],
+                    "amount" => $detail["amount"],
+                    "amountType" => $detail["amountType"],
+                    "memo" => $detail["memo"],
+                    "vendorNo" => $detail["vendorNo"]
+                ];
+    
+                if (isset($detail["vendorNo"])) {
+                    $content["data"][$journalIndex]["detailJournalVoucher"][$detailIndex]["vendorNo"] = "1000";
+                    $content["data"][$journalIndex]["detailJournalVoucher"][$detailIndex]["subsidiaryType"] = "VENDOR";
                 }
             }
+        }
 
-            $context = stream_context_create($opts);
-            $response = file_get_contents($url, false, $context);
-            $result = json_decode($response, true);
+        $url = $host . "/accurate/api/journal-voucher/bulk-save.do";
 
-            
-            $data = json_decode($response, true);
-            $this->logBatchResults($logFile, $batch, $result, $batchIndex + 1, "Journal");
-            
-            // var_dump($response); die;
-            if ($response) {
-                Yii::$app->session->setFlash('success', 'New Journal Added.');
-            } else {
-                Yii::$app->session->setFlash('error', 'Failed to send data to Accurate Online.');
-            }
+        $opts = [
+            "http" => [
+                "method" => "POST",
+                "header" => $header,
+                "content" => json_encode($content),
+                "ignore_errors" => true,
+            ]
+        ];
 
-        }   
+        $context = stream_context_create($opts);
+        $response = file_get_contents($url, false, $context);
+        $result = json_decode($response, true);
+        // var_dump($result);die;
 
-        // Yii::$app->session->setFlash('success', "Total data berhasil: {$successCount}");
-        // Yii::$app->session->setFlash('error', "Total data gagal: {$errorCount}");
-        return $this->redirect(['/error/journal-errors']);
+        // Hitung waktu eksekusi setelah batch dijalankan
+        $executionTime = microtime(true) - $startTime;
+        $remainingTime = $maxExecutionTime - $executionTime;   
+        
+        $this->logBatchResults($logFile, $batch, $result, $batchIndex + 1, "Journal", $executionTime, $remainingTime);
+        
+        Yii::$app->session->set('journalBatchIndex', $batchIndex + 1);
+
+        return Yii::$app->response->redirect([
+            'accurate/authorize', 'batchIndex' => $batchIndex + 1
+        ]);
+        
+        // return $this->addJournalVoucher($accessToken, $session, $host, $batchIndex+1);
     }
 
     private function bulkSaveAccount($accessToken, $session, $host)
@@ -392,12 +388,8 @@ class AccurateController extends Controller
         return $this->redirect(['error/account-errors']);
     }
 
-    private function logBatchResults($logFile, $batch, $result, $batchNumber, $type)
+    private function logBatchResults($logFile, $batch, $result, $batchNumber, $type, $executionTime, $remainingTime)
     {
-        $dateTime = date('Ymd_His'); // Format: YYYYMMDD_HHMMSS
-        file_put_contents($logFile, "Log file created at: " . date('Y-m-d H:i:s') . "\n");
-        $logMessages = "Batch #{$batchNumber} - " . date('Y-m-d H:i:s') . "\n";
-        $logMessages .= "--------------------------------------------\n";
         //perlu di cek lagi buat ['d']
         if($type == "Account"){
             if (isset($result['d']) && is_array($result['d'])) {
@@ -442,6 +434,13 @@ class AccurateController extends Controller
             file_put_contents($logFileRaw, $resultString, FILE_APPEND);
             file_put_contents($logFile, $logMessages, FILE_APPEND);
         } else if($type == "Journal"){
+            $dateTime = date('Ymd_His'); // Format: YYYYMMDD_HHMMSS
+            file_put_contents($logFile, "Log file created at: " . date('Y-m-d H:i:s') . "\n");
+            $logMessages = "Batch #{$batchNumber} - " . date('Y-m-d H:i:s') . "\n";
+            $logMessages .= "--------------------------------------------\n";
+            // Log hasil batch dan sisa time limit
+            file_put_contents($logFile, "Batch: " . ($batchNumber + 1) . " | Execution Time: " . round($executionTime, 2) . "s | Remaining Time: " . round($remainingTime, 2) . "s\n", FILE_APPEND);
+        
             if (isset($result['d']) && is_array($result['d'])) {
                 foreach ($result['d'] as $item) {
                     $response = is_array($item['d'] ?? null) ? json_encode($item['d']) : ($item['d'] ?? 'No message');
@@ -472,12 +471,12 @@ class AccurateController extends Controller
                 mkdir($uploadPath, 0777, true);
             }
             $dateTime = date('Ymd_His'); // Format: YYYYMMDD_HHMMSS
-            $logFile = $uploadPath . "logfilejournal{$dateTime}.txt";
+            // $logFile = $uploadPath . "logfilejournal_{$dateTime}.txt";
             // if (file_exists($logFileRaw)) {
             //     unlink($logFileRaw);
             // }
             // file_put_contents($logFile, $resultString);
-            file_put_contents($logFile, $logMessages);
+            file_put_contents($logFile, $logMessages, FILE_APPEND);
         }
         // Simpan jumlah sukses dan error ke flash
         // Yii::$app->session->addFlash('success', "{$successCount} account(s) berhasil disimpan.");

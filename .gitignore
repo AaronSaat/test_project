@@ -6,3 +6,9 @@ basic/web/uploads/jurnal_pemetaan.json
 basic/web/uploads/jurnal_pemetaan.json
 basic/web/uploads/jurnal_pemetaan.json
 /basic/web/assets
+basic/controllers/MigrationController.php
+/basic/data
+basic/runner.php
+basic/spliter.php
+basic/controllers/TestController.php
+basic/controllers/TestController.php
