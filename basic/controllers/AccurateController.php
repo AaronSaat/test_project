@@ -24,6 +24,7 @@ class AccurateController extends Controller
 
     public function actionAuthorize($batchIndex)
     {   
+        // Yii::$app->session->destroy();
         Yii::$app->session->set('batchIndex', $batchIndex);
 
         //kalo sudah ada 3 itu langsung saja, gausah authorize lagi
@@ -31,15 +32,14 @@ class AccurateController extends Controller
             $session = Yii::$app->session->get('sessionWeb');
             $host = Yii::$app->session->get('hostWeb');
             $accessToken = Yii::$app->session->get('accesstokenWeb');
-            var_dump($session, $host, $accessToken);die;
             $this->actionAddJournalVoucher($accessToken, $session, $host, $batchIndex);
         } else {
             $url = "https://account.accurate.id/oauth/authorize?" . http_build_query([
                 'client_id' => $this->clientId,
                 'response_type' => 'code',
                 'redirect_uri' => $this->redirectUri,
-                // 'scope' => 'journal_voucher_delete',
-                'scope' => Yii::$app->session['inputScope']
+                'scope' => 'journal_voucher_save',
+                // 'scope' => Yii::$app->session['inputScope']
             ]);
     
             return $this->redirect($url);
@@ -49,6 +49,11 @@ class AccurateController extends Controller
 
     public function actionCallback()
     {
+        // die;
+        if(Yii::$app->request->get('error')){
+            var_dump(Yii::$app->request->get('error'));
+            die;
+        }
         $code = Yii::$app->request->get('code');
         $basicAuth = base64_encode("$this->clientId:$this->clientSecret");
 
@@ -77,16 +82,15 @@ class AccurateController extends Controller
         $context = stream_context_create($opts);
         $response = file_get_contents($url, false, $context);
         $json = json_decode($response);
-        // var_dump($json);die;
-        $accessToken = $json->{"access_token"};
-        $refreshToken = $json->{"refresh_token"};
         
-        if (isset($accessToken) && isset($refreshToken)) {
+        if (isset($json->{"access_token"}) && isset($json->{"refresh_token"})) {
+            $accessToken = $json->{"access_token"};
+            $refreshToken = $json->{"refresh_token"};
             Yii::$app->session->set('access_token', $accessToken);
             Yii::$app->session->set('refresh_token', $refreshToken);
             $this->getDatabaseList($accessToken);
         } else {
-            echo "Failed to get access token";
+            var_dump($json);
             die;
         }
     }
@@ -114,7 +118,7 @@ class AccurateController extends Controller
 
 
         if (count($databaseList) > 0) {
-            $id = $databaseList[6]->{"id"};
+            $id = $databaseList[5]->{"id"};
             $this->openDatabase($accessToken, $id);
         } else {
             echo "You do not have any database, please create database from https://accurate.id";
@@ -139,15 +143,17 @@ class AccurateController extends Controller
         ];
 
         $context = stream_context_create($opts);
+        var_dump($context);
         $response = file_get_contents($url, false, $context);
-        $session = json_decode($response)->{"session"};
-        $host = json_decode($response)->{"host"};
-        $accessToken = Yii::$app->session->get('accesstokenWeb', $accessToken);
-        if (isset($session) && isset($host)) {
+        $json = json_decode($response);
+        if (isset($json->{"session"}) && isset($json->{"host"})) {
+            $session = $json->{"session"};
+            $host = $json->{"host"};
+            // $accessToken = Yii::$app->session->get('accesstokenWeb', $accessToken);
             Yii::$app->session->set('sessionWeb',$session);
             Yii::$app->session->set('hostWeb', $host);
         } else {
-            echo "Failed to open database";
+            var_dump($json);
             die;
         }
 
@@ -314,6 +320,8 @@ class AccurateController extends Controller
         $this->logBatchResults($logFile, $batch, $result, $batchIndex + 1, "Journal", $executionTime, $remainingTime);
         
         Yii::$app->session->set('journalBatchIndex', $batchIndex + 1);
+        
+        
 
         return Yii::$app->response->redirect([
             'accurate/authorize', 'batchIndex' => $batchIndex + 1
