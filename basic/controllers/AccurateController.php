@@ -6,6 +6,7 @@ use Yii;
 use yii\web\Controller;
 use app\models\Accounterror;
 use app\models\Journalerror;
+use app\models\Oauth2Model;
 
 class AccurateController extends Controller
 { 
@@ -25,14 +26,26 @@ class AccurateController extends Controller
     public function actionAuthorize($batchIndex)
     {   
         // Yii::$app->session->destroy();
+        // panggil cek API
         Yii::$app->session->set('batchIndex', $batchIndex);
+        $oauth = Oauth2Model::find()->one();
 
         //kalo sudah ada 3 itu langsung saja, gausah authorize lagi
-        if(Yii::$app->session->get('sessionWeb') && Yii::$app->session->get('hostWeb') && Yii::$app->session->get('accesstokenWeb')) {
-            $session = Yii::$app->session->get('sessionWeb');
-            $host = Yii::$app->session->get('hostWeb');
-            $accessToken = Yii::$app->session->get('accesstokenWeb');
-            $this->actionAddJournalVoucher($accessToken, $session, $host, $batchIndex);
+        if($oauth) {
+            $is_session_id_active = $this->_cekSessionId($oauth->accessToken, $oauth->session_id,);
+            if ($is_session_id_active) {
+                // $aol = $this->_accessAPI($action, $oauth->accessToken, $oauth->session_id, $oauth->host, $id);
+                $this->actionAddJournalVoucher($oauth->accessToken, $oauth->session_id, $oauth->host, $batchIndex);
+                // return $aol;
+            } else {
+                $refresh_session_id = $this->_refreshSessionId($oauth->db_id, $oauth->session_id);
+                if ($refresh_session_id) {
+                    Oauth2Model::updateAll(['session_id' => $refresh_session_id['x_session_id']], ['id' => $oauth->id]);
+                }
+                // $aol = $this->_accessAPI($action, $oauth->accessToken, $refresh_session_id['x_session_id'], $refresh_session_id['host'], $id);
+                $this->actionAddJournalVoucher($oauth->accessToken, $refresh_session_id['x_session_id'], $refresh_session_id['host'], $batchIndex);
+                // return $aol;
+            }
         } else {
             $url = "https://account.accurate.id/oauth/authorize?" . http_build_query([
                 'client_id' => $this->clientId,
@@ -86,8 +99,12 @@ class AccurateController extends Controller
         if (isset($json->{"access_token"}) && isset($json->{"refresh_token"})) {
             $accessToken = $json->{"access_token"};
             $refreshToken = $json->{"refresh_token"};
-            Yii::$app->session->set('access_token', $accessToken);
-            Yii::$app->session->set('refresh_token', $refreshToken);
+            // var_dump($accessToken, $refreshToken);die;
+            
+            $model = new Oauth2Model();
+            $model->accessToken = $accessToken;
+            $model->refreshToken = $refreshToken;
+            $model->save();
             $this->getDatabaseList($accessToken);
         } else {
             var_dump($json);
@@ -116,9 +133,11 @@ class AccurateController extends Controller
 
         $databaseList = json_decode($response)->{"d"};
 
-
         if (count($databaseList) > 0) {
-            $id = $databaseList[5]->{"id"};
+            $id = $databaseList[6]->{"id"};
+            $model = Oauth2Model::find()->one();
+            $model->db_id = 1755270;
+            $model->save();
             $this->openDatabase($accessToken, $id);
         } else {
             echo "You do not have any database, please create database from https://accurate.id";
@@ -149,26 +168,30 @@ class AccurateController extends Controller
         if (isset($json->{"session"}) && isset($json->{"host"})) {
             $session = $json->{"session"};
             $host = $json->{"host"};
-            // $accessToken = Yii::$app->session->get('accesstokenWeb', $accessToken);
-            Yii::$app->session->set('sessionWeb',$session);
-            Yii::$app->session->set('hostWeb', $host);
+
+            $oauth = Oauth2Model::find()->one();
+            $oauth->session_id = $session;
+            $oauth->host = $host;
+            $oauth->save();
         } else {
             var_dump($json);
             die;
         }
 
+        $oauth = Oauth2Model::find()->one();
+        $this->actionAddJournalVoucher($oauth->accessToken, $oauth->session_id, $oauth->host, 0);
         // $this->getJournal($accessToken, $session, $host);    
         // $this->deleteJournal($accessToken, $session, $host);    
-        if (Yii::$app->session->get('inputScope') == "glaccount_save") {
-            $this->bulkSaveAccount($accessToken, $session, $host);
-        }        
-        else if (Yii::$app->session->get('inputScope') == "journal_voucher_save") {
-            $batchIndex = Yii::$app->session->get('batchIndex');
-            $this->actionAddJournalVoucher($accessToken, $session, $host, $batchIndex);
-        } 
-        else if (Yii::$app->session->get('inputScope') == "journal_voucher_delete") {
-            $this->deleteJournal($accessToken, $session, $host);    
-        } 
+        // if (Yii::$app->session->get('inputScope') == "glaccount_save") {
+        //     $this->bulkSaveAccount($accessToken, $session, $host);
+        // }        
+        // else if (Yii::$app->session->get('inputScope') == "journal_voucher_save") {
+        //     $batchIndex = Yii::$app->session->get('batchIndex');
+        //     $this->actionAddJournalVoucher($accessToken, $session, $host, $batchIndex);
+        // } 
+        // else if (Yii::$app->session->get('inputScope') == "journal_voucher_delete") {
+        //     $this->deleteJournal($accessToken, $session, $host);    
+        // } 
         // Session::flush();
     }
 
@@ -317,7 +340,7 @@ class AccurateController extends Controller
         $executionTime = microtime(true) - $startTime;
         $remainingTime = $maxExecutionTime - $executionTime;   
         
-        $this->logBatchResults($logFile, $batch, $result, $batchIndex + 1, "Journal", $executionTime, $remainingTime);
+        $this->logBatchResults($logFile, $batch, $result, $batchIndex + 1, "Journal", $executionTime, $remainingTime, $session, $host, $batchIndex);
         
         Yii::$app->session->set('journalBatchIndex', $batchIndex + 1);
         
@@ -421,7 +444,7 @@ class AccurateController extends Controller
         return $this->redirect(['error/account-errors']);
     }
 
-    private function logBatchResults($logFile, $batch, $result, $batchNumber, $type, $executionTime, $remainingTime)
+    private function logBatchResults($logFile, $batch, $result, $batchNumber, $type, $executionTime, $remainingTime, $session, $host, $batchIndex)
     {
         //perlu di cek lagi buat ['d']
         if($type == "Account"){
@@ -469,10 +492,15 @@ class AccurateController extends Controller
         } else if($type == "Journal"){
             $dateTime = date('Ymd_His'); // Format: YYYYMMDD_HHMMSS
             file_put_contents($logFile, "Log file created at: " . date('Y-m-d H:i:s') . "\n");
-            $logMessages = "Batch #{$batchNumber} - " . date('Y-m-d H:i:s') . "\n";
+            $logMessages = "--------------------------------------------\n";
+            $logMessages .= "Session : $session \n";
+            $logMessages .= "Host : $host \n";
+            $logMessages .= "Batch Index : $batchIndex \n";
+            $logMessages .= "--------------------------------------------\n";
+            $logMessages .= "Batch #{$batchNumber} - " . date('Y-m-d H:i:s') . "\n";
             $logMessages .= "--------------------------------------------\n";
             // Log hasil batch dan sisa time limit
-            file_put_contents($logFile, "Batch: " . ($batchNumber + 1) . " | Execution Time: " . round($executionTime, 2) . "s | Remaining Time: " . round($remainingTime, 2) . "s\n", FILE_APPEND);
+            file_put_contents($logFile, "Batch: " . ($batchNumber) . " | Execution Time: " . round($executionTime, 2) . "s | Remaining Time: " . round($remainingTime, 2) . "s\n", FILE_APPEND);
         
             if (isset($result['d']) && is_array($result['d'])) {
                 foreach ($result['d'] as $item) {
@@ -599,5 +627,87 @@ class AccurateController extends Controller
         }
 
         return $this->redirect(['/error/account-errors']);
+    }
+
+    public function cekApi(){
+        $oauth = Oauth2Model::find()->one();
+
+
+        $is_session_id_active = $this->_cekSessionId($oauth->accessToken, $oauth->session_id,);
+        if ($is_session_id_active) {
+            // $aol = $this->_accessAPI($action, $oauth->accessToken, $oauth->session_id, $oauth->host, $id);
+            $this->actionAddJournalVoucher($oauth->accessToken, $oauth->session_id, $oauth->host, $batchIndex);
+            // return $aol;
+        } else {
+            $refresh_session_id = $this->_refreshSessionId($oauth->db_id, $oauth->session_id);
+            if ($refresh_session_id) {
+                Oauth2Model::updateAll(['session_id' => $refresh_session_id['x_session_id']], ['id' => $oauth->id]);
+            }
+            // $aol = $this->_accessAPI($action, $oauth->accessToken, $refresh_session_id['x_session_id'], $refresh_session_id['host'], $id);
+            $this->actionAddJournalVoucher($oauth->accessToken, $oauth->session_id, $oauth->host, $batchIndex);
+            // return $aol;
+        }
+    }
+
+    private function _cekSessionId($accessToken, $session_id)
+    {
+        $header = [
+            "Authorization: Bearer $accessToken",
+        ];
+
+        $url = "https://account.accurate.id/api/db-check-session.do?session=" . $session_id;
+
+        $opts = [
+            "http" => [
+                "method" => "GET",
+                "header" => $header,
+                "ignore_errors" => true,
+            ]
+        ];
+
+        $context = stream_context_create($opts);
+        $response = file_get_contents($url, false, $context);
+
+        $result = json_decode($response, true);
+
+        if ($result["s"] && $result["d"]) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private function _refreshSessionId($db_id, $session_id)
+    {
+        $header = [
+            "Content-Type: application/json",
+        ];
+
+        $content = [
+            "id" => $db_id,
+            "session" => $session_id,
+        ];
+
+        $url = "https://account.accurate.id/api/db-refresh-session.do";
+
+        $opts = [
+            "http" => [
+                "method" => "GET",
+                "header" => $header,
+                "content" => json_encode($content),
+                "ignore_errors" => true,
+            ]
+        ];
+
+        $context = stream_context_create($opts);
+        $response = file_get_contents($url, false, $context);
+
+        $result = json_decode($response, true);
+
+        if ($result["s"] && $result["d"]) {
+            return $result["d"];
+        } else {
+            return false;
+        }
     }
 } 
