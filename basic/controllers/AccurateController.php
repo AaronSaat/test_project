@@ -26,15 +26,25 @@ class AccurateController extends Controller
     {   
         Yii::$app->session->set('batchIndex', $batchIndex);
 
-        $url = "https://account.accurate.id/oauth/authorize?" . http_build_query([
-            'client_id' => $this->clientId,
-            'response_type' => 'code',
-            'redirect_uri' => $this->redirectUri,
-            // 'scope' => 'journal_voucher_delete',
-            'scope' => Yii::$app->session['inputScope']
-        ]);
+        //kalo sudah ada 3 itu langsung saja, gausah authorize lagi
+        if(Yii::$app->session->get('sessionWeb') && Yii::$app->session->get('hostWeb') && Yii::$app->session->get('accesstokenWeb')) {
+            $session = Yii::$app->session->get('sessionWeb');
+            $host = Yii::$app->session->get('hostWeb');
+            $accessToken = Yii::$app->session->get('accesstokenWeb');
+            var_dump($session, $host, $accessToken);die;
+            $this->actionAddJournalVoucher($accessToken, $session, $host, $batchIndex);
+        } else {
+            $url = "https://account.accurate.id/oauth/authorize?" . http_build_query([
+                'client_id' => $this->clientId,
+                'response_type' => 'code',
+                'redirect_uri' => $this->redirectUri,
+                // 'scope' => 'journal_voucher_delete',
+                'scope' => Yii::$app->session['inputScope']
+            ]);
+    
+            return $this->redirect($url);
+        }
 
-        return $this->redirect($url);
     }
 
     public function actionCallback()
@@ -66,12 +76,19 @@ class AccurateController extends Controller
 
         $context = stream_context_create($opts);
         $response = file_get_contents($url, false, $context);
-
         $json = json_decode($response);
         // var_dump($json);die;
         $accessToken = $json->{"access_token"};
         $refreshToken = $json->{"refresh_token"};
-        $this->getDatabaseList($accessToken);
+        
+        if (isset($accessToken) && isset($refreshToken)) {
+            Yii::$app->session->set('access_token', $accessToken);
+            Yii::$app->session->set('refresh_token', $refreshToken);
+            $this->getDatabaseList($accessToken);
+        } else {
+            echo "Failed to get access token";
+            die;
+        }
     }
 
     private function getDatabaseList($accessToken)
@@ -97,7 +114,7 @@ class AccurateController extends Controller
 
 
         if (count($databaseList) > 0) {
-            $id = $databaseList[0]->{"id"};
+            $id = $databaseList[6]->{"id"};
             $this->openDatabase($accessToken, $id);
         } else {
             echo "You do not have any database, please create database from https://accurate.id";
@@ -123,9 +140,16 @@ class AccurateController extends Controller
 
         $context = stream_context_create($opts);
         $response = file_get_contents($url, false, $context);
-
         $session = json_decode($response)->{"session"};
         $host = json_decode($response)->{"host"};
+        $accessToken = Yii::$app->session->get('accesstokenWeb', $accessToken);
+        if (isset($session) && isset($host)) {
+            Yii::$app->session->set('sessionWeb',$session);
+            Yii::$app->session->set('hostWeb', $host);
+        } else {
+            echo "Failed to open database";
+            die;
+        }
 
         // $this->getJournal($accessToken, $session, $host);    
         // $this->deleteJournal($accessToken, $session, $host);    
@@ -174,6 +198,7 @@ class AccurateController extends Controller
 
     public function actionAddJournalVoucher($accessToken, $session, $host, $batchIndex)
     {   
+        // var_dump($accessToken, $session, $host, $batchIndex);
         $data = Yii::$app->session->get('journalData');
         // $accessToken = Yii::$app->session->get('accessToken');
         // $session = Yii::$app->session->get('session');
@@ -210,7 +235,7 @@ class AccurateController extends Controller
         $batchSize = 100; // Batasi jumlah data per batch
         $batches = array_chunk($data, $batchSize);
         $totalBatch = count($batches);
-        // var_dump($totalBatch);die;
+        // var_dump($accessToken, $session, $host);die;
         
         // titik berhenti rekursi
         if ($batchIndex == $totalBatch) {
@@ -255,7 +280,7 @@ class AccurateController extends Controller
                     "accountNo" => $detail["accountNo"],
                     "amount" => $detail["amount"],
                     "amountType" => $detail["amountType"],
-                    "memo" => $detail["memo"],
+                    "memo" => $detail["memo"],  
                     "vendorNo" => $detail["vendorNo"]
                 ];
     

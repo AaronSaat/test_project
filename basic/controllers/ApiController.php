@@ -48,7 +48,7 @@ class ApiController extends Controller
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
             'pagination' => [
-                'pageSize' => 300,
+                'pageSize' => 500,
                 // 'pagination' => false,
             ],
         ]);
@@ -739,10 +739,11 @@ class ApiController extends Controller
                                 'amount' => (double)(str_replace('-', '', $journal['GLAMOUNT'])),
                                 'amountType' => isset($journal['SEQ']) && $journal['SEQ'] == 1 ? 'CREDIT' : 'DEBIT',
                                 'memo' => $journal['DESCRIPTION'],
-                                'vendorNo' => ($journal['SUBSIDIARY'] == 2 && isset($accountMapping[$journal['GLACCOUNT']]) && $accountMapping[$journal['GLACCOUNT']] == '2-2000') 
-                                ? '1000' 
-                                : (!empty($journal['SUBSIDIARY']) ? (string) $journal['SUBSIDIARY'] : "0"),
-                                'hasChanged' => $hasChanged
+                                // 'vendorNo' => ($journal['SUBSIDIARY'] == 2 && isset($accountMapping[$journal['GLACCOUNT']]) && $accountMapping[$journal['GLACCOUNT']] == '2-2000')  
+                                // ? '1000'  
+                                // : (!empty($journal['SUBSIDIARY']) ? (string) $journal['SUBSIDIARY'] : "0")
+                                'vendorNo' => ($journal['SUBSIDIARY'] == 2 && $accountNoOri == '2000.05')  
+                                ? '1000' : (!empty($journal['SUBSIDIARY']) ? (string) $journal['SUBSIDIARY'] : "")
                             ];
                     
                             // Simpan detail di database DetailCompare
@@ -754,7 +755,8 @@ class ApiController extends Controller
                             $detailCompare->amount = (double)(str_replace('-', '', $journal['GLAMOUNT']));
                             $detailCompare->amountType = isset($journal['SEQ']) && $journal['SEQ'] == 1 ? 'CREDIT' : 'DEBIT';
                             $detailCompare->memo = $journal['DESCRIPTION'];
-                            $detailCompare->vendorNo = $journal['SUBSIDIARY'] ?? "";
+                            $detailCompare->vendorNo = ($journal['SUBSIDIARY'] == 2 && $accountNoOri == '2000.05')  
+                            ? '1000' : (!empty($journal['SUBSIDIARY']) ? (string) $journal['SUBSIDIARY'] : "");
                             $detailCompare->save();
                         }
 
@@ -766,8 +768,8 @@ class ApiController extends Controller
                         // Simpan ke sesi untuk diproses lebih lanjut
                         Yii::$app->session->set('importJournalFromJson', array_values($groupedJournals));
                         Yii::$app->session->setFlash('success', "Files successfully uploaded and processed.");
-                        // return $this->redirect(['journal-index']);
-                        return $this->redirect(['sendjournalapi']);
+                        return $this->redirect(['journal-index']);
+                        // return $this->redirect(['sendjournalapi']);
                         // echo "<pre>";
                             // print_r($filteredData);
                             // echo "</pre>";
@@ -830,6 +832,7 @@ class ApiController extends Controller
                 'transDate' => $journal['transDate'],
                 'description' => $journal['description'],
                 'branchName' => $journal['branchName'],
+                // 'id' => 1755270,
                 'detailJournalVoucher' => [],
             ];
             
