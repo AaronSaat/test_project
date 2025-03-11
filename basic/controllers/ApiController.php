@@ -43,18 +43,18 @@ class ApiController extends Controller
         // // $query = JournalCompare::find();
         // $query = JournalCompare::find()->limit(100); 
         // ganti 51000
-        $query = JournalCompare::find()->limit(20000);
+        //$query = JournalCompare::find()->limit(20000);
 
-        $dataProvider = new ActiveDataProvider([
-            'query' => $query,
-            'pagination' => [
-                'pageSize' => 500,
-                // 'pagination' => false,
-            ],
-        ]);
+        // $dataProvider = new ActiveDataProvider([
+        //     'query' => $query,
+        //     'pagination' => [
+        //         'pageSize' => 50000,
+        //         // 'pagination' => false,
+        //     ],
+        // ]);
 
         return $this->render('journalindex', [
-            'dataProvider' => $dataProvider,
+            //'dataProvider' => $dataProvider,
         ]);
     }
 
@@ -810,9 +810,10 @@ class ApiController extends Controller
     public function actionSendjournalapi() 
     {
         // var_dump("masuk");die;
-        $selectedIds = Yii::$app->request->post('selection', []);
-        $journals = JournalCompare::find()->andWhere(['in', 'id', $selectedIds])->asArray()->all();
+        //$selectedIds = Yii::$app->request->post('selection', []);
         
+        $journals = JournalCompare::find()->asArray()->all();
+        //var_dump(count($journals));die;
         // foreach ($journals as $journalprint) {
         //     echo "<pre>";
         //     var_dump($journalprint); 
