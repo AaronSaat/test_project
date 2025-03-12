@@ -230,6 +230,17 @@ class AccurateController extends Controller
     public function actionAddJournalVoucher($accessToken, $session, $host, $batchIndex)
     {   
         try{
+            // if($batchIndex == 1){
+            //     Yii::$app->session->set('batchSave', 0);
+            // }
+
+            // $batchSave =  Yii::$app->session->get('batchSave');
+            // if($batchIndex == $batchSave){
+            //     $batchIndex = $batchIndex + 1;
+            // }
+            //too many redirect di index 19, jadi delete saat indexnya - 1
+            
+
             $totalCount = JournalCompare::find()->count();
             $batchSize = 100;
             $totalBatch = ceil($totalCount / $batchSize);
@@ -237,7 +248,7 @@ class AccurateController extends Controller
             $journals = JournalCompare::find()
             ->with('details')
             ->asArray()
-            ->offset(($batchIndex - 1) * $batchSize) // Hitung mulai dari record keberapa
+            ->offset(($batchIndex - 1) * $batchSize) 
             ->limit($batchSize) // Ambil 100 data
             ->all();
 
@@ -265,7 +276,7 @@ class AccurateController extends Controller
             }
             
             // titik berhenti rekursi
-            if ($batchIndex == $totalBatch) {
+            if ($batchIndex == $totalBatch + 1) {
                 Yii::$app->session->setFlash('success', 'Semua jurnal berhasil dikirim.');
                 return $this->redirect(['/error/journal-errors']); // Redirect ke halaman sukses
             }
@@ -331,7 +342,6 @@ class AccurateController extends Controller
             $context = stream_context_create($opts);
             $response = file_get_contents($url, false, $context);
             $result = json_decode($response, true);
-            // var_dump($result);die;
 
             // Hitung waktu eksekusi setelah batch dijalankan
             $executionTime = microtime(true) - $startTime;
@@ -340,17 +350,8 @@ class AccurateController extends Controller
             $this->logBatchResults($logFile, $result, "Journal", $executionTime, $remainingTime, $accessToken, $session, $host, $batchIndex);
             
             Yii::$app->session->set('journalBatchIndex', $batchIndex + 1);
-            
-            
-
-            // return Yii::$app->response->redirect([
-            //     'accurate/authorize', 'batchIndex' => $batchIndex + 1
-            // ]);
 
             return $this->redirect(['accurate/authorize', 'batchIndex' => $batchIndex + 1]);
-            
-            // return $this->addJournalVoucher($accessToken, $session, $host, $batchIndex+1);
-            //add log error function dan trycatch nya
         }catch (\yii\web\HttpException $e) {
             $this->logError($e);
             return [
@@ -506,6 +507,10 @@ class AccurateController extends Controller
             $logMessages .= "--------------------------------------------\n";
             $logMessages .= "Batch #{$batchIndex} - " . date('Y-m-d H:i:s') . "\n";
             $logMessages .= "--------------------------------------------\n";
+
+            if ($batchIndex % 18 == 0) {
+                $this->deleteAllCookies();
+            }
             // Log hasil batch dan sisa time limit
             file_put_contents($logFile, "Batch: " . ($batchIndex) . " | Execution Time: " . round($executionTime, 2) . "s | Remaining Time: " . round($remainingTime, 2) . "s\n", FILE_APPEND);
         
@@ -518,8 +523,14 @@ class AccurateController extends Controller
                     $logMessages .= "Message: {$response}\n";
                     $logMessages .= "Journal Number: {$number}\n";
                     $logMessages .= "--------------------------------------------\n";
+
+                    $status;
     
-                    $status = strpos($response, 'berhasil disimpan') !== false ? 'success' : 'error';
+                    if(strpos($response, 'berhasil disimpan') == true){
+                        $status = 'success';
+                    } else {
+                        $status = 'error';
+                    }
                     // Simpan ke database
                     $journalError = new JournalError();
                     $journalError->info = $status;
@@ -528,7 +539,16 @@ class AccurateController extends Controller
                     $journalError->save();
                 }
             } else {
-                $logMessages .= "No data found in the batch result.\n";
+                //data nya sebenarnya masuk, tapi missing response aja / log file 
+                $logMessages .= "Data in batch $batchIndex succesfully uploaded, but no response retrived.\n";
+
+                for ($i = 0; $i < 100; $i++) {
+                    $journalError = new JournalError();
+                    $journalError->info = 'Missing response';
+                    $journalError->number = 'No journal number';
+                    $journalError->response = 'Data kemungkinan sudah terupload, namun tidak ada response. Coba cek AOL';
+                    $journalError->save();
+                }
             }
             
             //sini
@@ -725,11 +745,15 @@ class AccurateController extends Controller
         $message = $e->getMessage();
 
         $dateTime = date('Ymd_His'); // Format: YYYYMMDD_HHMMSS
-        file_put_contents($logFile, "Log file created at: " . date('Y-m-d H:i:s') . "\n");
+        file_put_contents($logFile, "Error log file created at: " . date('Y-m-d H:i:s') . "\n");
         $logMessages = "--------------------------------------------\n";
         $logMessages .= "Status Code : $statuscode \n"; //ganti error message
         $logMessages .= "Message : $message \n"; //ganti error message
         $logMessages .= "--------------------------------------------\n";
         file_put_contents($logFile, $logMessages, FILE_APPEND);
+    }
+
+    private function deleteAllCookies() {
+        Yii::$app->request->cookies->clear();
     }
 } 

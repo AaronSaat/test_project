@@ -10,10 +10,7 @@ $this->params['breadcrumbs'][] = $this->title;
     Notes:<br>
     -> <b>ammountType</b> adalah debit atau kredit, pada database accurate desktop disimbolkan dengan 0 = DEBIT dan 1 = CREDIT <br>
     -> Detail yang menggunakan pos akun <b>2000.05 Hutang PPh 23/Jasa</b> akan dimasukkan data pemasoknya yaitu Pemasok Umum (ID = 1000) <br>
-    -> <b>accountNo dan accountOri yang diberi warna merah</b> adalah detail jurnal dengan pemetaan pos akun, dengan keterangan berikut: <br>
-    <ul>
-        <li>Insert Pemetaan</li>
-    </ul>
+    -> <b>accountNo dan accountOri yang diberi warna merah</b> adalah detail jurnal dengan pemetaan pos akun: <br>
     -> jika tidak diberi warna merah, maka tidak dilakukan pemetaan<br>
 </p>
 

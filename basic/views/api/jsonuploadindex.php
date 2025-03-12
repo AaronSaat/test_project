@@ -7,8 +7,6 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 
 <h1><?= Html::encode($this->title) ?></h1>
-<p> JANGAN LUPA EDIT BATCH SIZE = 100 </p>
-<p> HAPUS FILE LOG DULU </p>
 
 <?php $form = ActiveForm::begin([
     'id' => 'upload-json-form',

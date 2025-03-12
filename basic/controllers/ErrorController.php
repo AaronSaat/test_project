@@ -50,6 +50,8 @@ class ErrorController extends Controller
             $query->where(['info' => 'error']);
         } elseif ($filter === 'success') {
             $query->where(['info' => 'success']);
+        } elseif ($filter === 'Missing response') {
+            $query->where(['info' => 'Missing response']);
         }
 
         $dataProvider = new ActiveDataProvider([
@@ -62,11 +64,13 @@ class ErrorController extends Controller
         // Hitung jumlah 'success' dan 'error' di JournalError
         $successCountJournalError = JournalError::find()->where(['info' => 'success'])->count();
         $errorCountJournalError = JournalError::find()->where(['info' => 'error'])->count();
+        $missingCountJournalError = JournalError::find()->where(['info' => 'Missing response'])->count();
 
         return $this->render('journalerrors', [
             'dataProvider' => $dataProvider,
             'successCountJournalError' => $successCountJournalError,
             'errorCountJournalError' => $errorCountJournalError,
+            'missingCountJournalError' => $missingCountJournalError,
             'filter' => $filter,
         ]);
     }
@@ -109,7 +113,7 @@ class ErrorController extends Controller
             $query->where(['info' => 'error']);
         } elseif ($filter === 'success') {
             $query->where(['info' => 'success']);
-        }
+        }  
 
         $dataProvider2 = new ActiveDataProvider([
             'query' => $query,

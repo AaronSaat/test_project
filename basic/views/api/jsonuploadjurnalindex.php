@@ -7,8 +7,7 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 
 <h1><?= Html::encode($this->title) ?></h1>
-<p> JANGAN LUPA EDIT BATCH SIZE = 100 </p>
-<p> HAPUS FILE LOG DULU </p>
+<p> BUKA FOLDER FILE LOG </p>
 
 <?php $form = ActiveForm::begin([
     'id' => 'upload-json-form',
@@ -17,7 +16,7 @@ $this->params['breadcrumbs'][] = $this->title;
 ]); ?>
 
 <div class="form-group">
-    <?= $form->field($model, 'journalFile')->fileInput()->label('Upload Journal File') ?>
+    <?= $form->field($model, 'journalFile')->fileInput()->label('Upload File Gabungan (Join)') ?>
 </div>
 
 <div class="form-group">

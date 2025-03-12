@@ -15,7 +15,7 @@ $this->params['breadcrumbs'][] = $this->title;
 <?php
 $form = ActiveForm::begin([
     'id' => 'send-journal-api-form',
-    'action' => ['accurate/authorize?batchIndex=0'], // Arahkan ke action controller
+    'action' => ['accurate/authorize?batchIndex=1'], // Arahkan ke action controller
     'method' => 'post',
 ]); 
 ?>
@@ -46,10 +46,10 @@ $form = ActiveForm::begin([
 ?>
 
 <div class="form-group">
-    <?= Html::submitButton('Send Selected to API', [
+    <?= Html::submitButton('Kirim semua jurnal ke API', [
         'class' => 'btn btn-primary',
         'style' => 'display: block; width: 100%;',
-        'data-confirm' => 'Are you sure you want to send the selected accounts to Accurate Online?', 
+        'data-confirm' => 'Are you sure you want to send all to Accurate Online?', 
     ]) ?>
 </div>
 
