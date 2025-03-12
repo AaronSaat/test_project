@@ -6,6 +6,8 @@ use Yii;
 use yii\web\Controller;
 use app\models\Accounterror;
 use app\models\Journalerror;
+use app\models\DetailCompare;
+use app\models\JournalCompare;
 use app\models\Oauth2Model;
 
 class AccurateController extends Controller
@@ -228,19 +230,43 @@ class AccurateController extends Controller
     public function actionAddJournalVoucher($accessToken, $session, $host, $batchIndex)
     {   
         try{
-            // var_dump($accessToken, $session, $host, $batchIndex);
-            $data = Yii::$app->session->get('journalData');
-            
-            $batchSize = 100; // Batasi jumlah data per batch
-            $batches = array_chunk($data, $batchSize);
-            $totalBatch = count($batches);
-            
-            if ($batchIndex == 18 || $batchIndex == 37 ) {
-                $batchIndex++;
+            $totalCount = JournalCompare::find()->count();
+            $batchSize = 100;
+            $totalBatch = ceil($totalCount / $batchSize);
+
+            $journals = JournalCompare::find()
+            ->asArray()
+            ->offset(($batchIndex - 1) * $batchSize) // Hitung mulai dari record keberapa
+            ->limit($batchSize) // Ambil 100 data
+            ->all();
+
+            $formattedData = [];
+            foreach ($journals as $journal) {
+                $number = $journal['number'];
+                $journalData = [
+                    'number' => $journal['number'],
+                    'transDate' => $journal['transDate'],
+                    'description' => $journal['description'],
+                    'branchName' => $journal['branchName'],
+                    'detailJournalVoucher' => [],
+                ];
+                
+                $details = DetailCompare::find()->where(['number' => $number])->all();
+                foreach ($details as $detail) {
+                    $journalData['detailJournalVoucher'][] = [
+                        'accountNo' => $detail->accountNo, 
+                        'amount' => $detail->amount,
+                        'amountType' => $detail->amountType,
+                        'memo' => $detail->memo, 
+                        'vendorNo' => $detail->vendorNo, 
+                    ];
+                }
+
+                $formattedData[] = $journalData;
             }
             
             // titik berhenti rekursi
-            if ($batchIndex == $totalBatch) {
+            if ($batchIndex == $totalBatch-1) {
                 Yii::$app->session->setFlash('success', 'Semua jurnal berhasil dikirim.');
                 return $this->redirect(['/error/journal-errors']); // Redirect ke halaman sukses
             }
@@ -264,11 +290,10 @@ class AccurateController extends Controller
             $startTime = microtime(true);
             $maxExecutionTime = ini_get('max_execution_time');
 
-            $batch = $batches[$batchIndex];
             $content = ["data" => []];
 
             // JournalError::deleteAll();
-            foreach ($batch as $journalIndex => $journal) {
+            foreach ($formattedData as $journalIndex => $journal) {
                 $content["data"][$journalIndex] = [
                     "number" => $journal["number"],
                     "transDate" => $journal["transDate"],
@@ -313,15 +338,17 @@ class AccurateController extends Controller
             $executionTime = microtime(true) - $startTime;
             $remainingTime = $maxExecutionTime - $executionTime;   
             
-            $this->logBatchResults($logFile, $batch, $result, "Journal", $executionTime, $remainingTime, $accessToken, $session, $host, $batchIndex);
+            $this->logBatchResults($logFile, $result, "Journal", $executionTime, $remainingTime, $accessToken, $session, $host, $batchIndex);
             
             Yii::$app->session->set('journalBatchIndex', $batchIndex + 1);
             
             
 
-            return Yii::$app->response->redirect([
-                'accurate/authorize', 'batchIndex' => $batchIndex + 1
-            ]);
+            // return Yii::$app->response->redirect([
+            //     'accurate/authorize', 'batchIndex' => $batchIndex + 1
+            // ]);
+
+            return $this->redirect(['accurate/authorize', 'batchIndex' => $batchIndex + 1]);
             
             // return $this->addJournalVoucher($accessToken, $session, $host, $batchIndex+1);
             //add log error function dan trycatch nya
@@ -425,7 +452,7 @@ class AccurateController extends Controller
         return $this->redirect(['error/account-errors']);
     }
 
-    private function logBatchResults($logFile, $batch, $result, $type, $executionTime, $remainingTime, $accessToken, $session, $host, $batchIndex)
+    private function logBatchResults($logFile, $result, $type, $executionTime, $remainingTime, $accessToken, $session, $host, $batchIndex)
     {
         //perlu di cek lagi buat ['d']
         if($type == "Account"){
