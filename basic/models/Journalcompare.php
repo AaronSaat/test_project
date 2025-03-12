@@ -46,4 +46,9 @@ class Journalcompare extends \yii\db\ActiveRecord
             'branchName' => 'Branch Name',
         ];
     }
+
+    public function getDetails()
+    {
+        return $this->hasMany(DetailCompare::class, ['number' => 'number']); 
+    }
 }

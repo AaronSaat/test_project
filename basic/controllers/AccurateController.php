@@ -235,6 +235,7 @@ class AccurateController extends Controller
             $totalBatch = ceil($totalCount / $batchSize);
 
             $journals = JournalCompare::find()
+            ->with('details')
             ->asArray()
             ->offset(($batchIndex - 1) * $batchSize) // Hitung mulai dari record keberapa
             ->limit($batchSize) // Ambil 100 data
@@ -251,7 +252,6 @@ class AccurateController extends Controller
                     'detailJournalVoucher' => [],
                 ];
                 
-                $details = DetailCompare::find()->where(['number' => $number])->all();
                 foreach ($details as $detail) {
                     $journalData['detailJournalVoucher'][] = [
                         'accountNo' => $detail->accountNo, 
@@ -266,7 +266,7 @@ class AccurateController extends Controller
             }
             
             // titik berhenti rekursi
-            if ($batchIndex == $totalBatch-1) {
+            if ($batchIndex == $totalBatch) {
                 Yii::$app->session->setFlash('success', 'Semua jurnal berhasil dikirim.');
                 return $this->redirect(['/error/journal-errors']); // Redirect ke halaman sukses
             }
