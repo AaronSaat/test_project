@@ -351,7 +351,11 @@ class AccurateController extends Controller
             
             Yii::$app->session->set('journalBatchIndex', $batchIndex + 1);
 
-            return $this->redirect(['accurate/authorize', 'batchIndex' => $batchIndex + 1]);
+            if($batchIndex % 10 == 0){
+                return $this->redirect(['accurate/authorize', 'batchIndex' => $batchIndex + 1]);
+            } else {
+                $this->actionAuthorize($batchIndex + 1);
+            }
         }catch (\yii\web\HttpException $e) {
             $this->logError($e);
             return [
@@ -508,9 +512,6 @@ class AccurateController extends Controller
             $logMessages .= "Batch #{$batchIndex} - " . date('Y-m-d H:i:s') . "\n";
             $logMessages .= "--------------------------------------------\n";
 
-            if ($batchIndex % 18 == 0) {
-                $this->deleteAllCookies();
-            }
             // Log hasil batch dan sisa time limit
             file_put_contents($logFile, "Batch: " . ($batchIndex) . " | Execution Time: " . round($executionTime, 2) . "s | Remaining Time: " . round($remainingTime, 2) . "s\n", FILE_APPEND);
         
@@ -751,9 +752,5 @@ class AccurateController extends Controller
         $logMessages .= "Message : $message \n"; //ganti error message
         $logMessages .= "--------------------------------------------\n";
         file_put_contents($logFile, $logMessages, FILE_APPEND);
-    }
-
-    private function deleteAllCookies() {
-        Yii::$app->request->cookies->clear();
     }
 } 
