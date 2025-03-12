@@ -243,7 +243,6 @@ class AccurateController extends Controller
 
             $formattedData = [];
             foreach ($journals as $journal) {
-                $number = $journal['number'];
                 $journalData = [
                     'number' => $journal['number'],
                     'transDate' => $journal['transDate'],
@@ -252,13 +251,13 @@ class AccurateController extends Controller
                     'detailJournalVoucher' => [],
                 ];
                 
-                foreach ($details as $detail) {
+                foreach ($journal['details'] as $detail) {
                     $journalData['detailJournalVoucher'][] = [
-                        'accountNo' => $detail->accountNo, 
-                        'amount' => $detail->amount,
-                        'amountType' => $detail->amountType,
-                        'memo' => $detail->memo, 
-                        'vendorNo' => $detail->vendorNo, 
+                        'accountNo' => $detail['accountNo'],
+                        'amount' => $detail['amount'],
+                        'amountType' => $detail['amountType'],
+                        'memo' => $detail['memo'], 
+                        'vendorNo' => $detail['vendorNo'], 
                     ];
                 }
 
@@ -454,7 +453,6 @@ class AccurateController extends Controller
 
     private function logBatchResults($logFile, $result, $type, $executionTime, $remainingTime, $accessToken, $session, $host, $batchIndex)
     {
-        //perlu di cek lagi buat ['d']
         if($type == "Account"){
             if (isset($result['d']) && is_array($result['d'])) {
                 foreach ($result['d'] as $item) {
@@ -532,7 +530,8 @@ class AccurateController extends Controller
             } else {
                 $logMessages .= "No data found in the batch result.\n";
             }
-    
+            
+            //sini
             $resultString = json_encode($result, JSON_PRETTY_PRINT);
             $logMessages .= "Batch Result: {$resultString}\n\n";
 
@@ -540,12 +539,7 @@ class AccurateController extends Controller
             if (!is_dir($uploadPath)) {
                 mkdir($uploadPath, 0777, true);
             }
-            $dateTime = date('Ymd_His'); // Format: YYYYMMDD_HHMMSS
-            // $logFile = $uploadPath . "logfilejournal_{$dateTime}.txt";
-            // if (file_exists($logFileRaw)) {
-            //     unlink($logFileRaw);
-            // }
-            // file_put_contents($logFile, $resultString);
+            $dateTime = date('Ymd_His'); 
             file_put_contents($logFile, $logMessages, FILE_APPEND);
         }
     }
