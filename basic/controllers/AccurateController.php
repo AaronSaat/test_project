@@ -227,6 +227,50 @@ class AccurateController extends Controller
         // var_dump($response); die;
     }
 
+    private function executeCurlRequest($url, $method = 'GET', $headers = [], $postData = null) 
+    {
+        $curl = curl_init();
+        
+        $options = [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => $method,
+            CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_SSL_VERIFYPEER => false, // Untuk development, hapus di production
+        ];
+
+        if ($postData && in_array($method, ['POST', 'PUT'])) {
+            $options[CURLOPT_POSTFIELDS] = $postData;
+        }
+
+        curl_setopt_array($curl, $options);
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+        curl_close($curl);
+
+        if ($err) {
+            Yii::error("cURL Error: " . $err);
+            return [
+                'success' => false,
+                'error' => $err,
+                'httpCode' => $httpCode
+            ];
+        }
+
+        return [
+            'success' => true,
+            'data' => json_decode($response, true),
+            'httpCode' => $httpCode
+        ];
+    }
+
     public function actionAddJournalVoucher($accessToken, $session, $host, $batchIndex)
     {   
         try{
@@ -251,6 +295,7 @@ class AccurateController extends Controller
             ->offset(($batchIndex - 1) * $batchSize) 
             ->limit($batchSize) // Ambil 100 data
             ->all();
+
 
             $formattedData = [];
             foreach ($journals as $journal) {
@@ -281,7 +326,7 @@ class AccurateController extends Controller
                 return $this->redirect(['/error/journal-errors']); // Redirect ke halaman sukses
             }
 
-            $header = [
+            $headers = [
                 "Authorization: Bearer $accessToken",
                 "X-Session-ID: $session",
                 "Content-Type: application/json"
@@ -330,36 +375,37 @@ class AccurateController extends Controller
 
             $url = $host . "/accurate/api/journal-voucher/bulk-save.do";
 
-            $opts = [
-                "http" => [
-                    "method" => "POST",
-                    "header" => $header,
-                    "content" => json_encode($content),
-                    "ignore_errors" => true,
-                ]
-            ];
+            $result = $this->executeCurlRequest(
+                $url, 
+                'POST', 
+                $headers, 
+                json_encode($content)
+            );
 
-            $context = stream_context_create($opts);
-            $response = file_get_contents($url, false, $context);
-            $result = json_decode($response, true);
+            if (!$result['success']) {
+                throw new \Exception("Curl request failed: " . $result['error']);
+            }
 
-            // Hitung waktu eksekusi setelah batch dijalankan
+            $response = $result['data'];
+            
+            // Log hasil eksekusi
             $executionTime = microtime(true) - $startTime;
             $remainingTime = $maxExecutionTime - $executionTime;   
-            
-            $this->logBatchResults($logFile, $result, "Journal", $executionTime, $remainingTime, $accessToken, $session, $host, $batchIndex);
-            
-            Yii::$app->session->set('journalBatchIndex', $batchIndex + 1);
 
-            if($batchIndex % 10 == 0){
-                return $this->redirect(['accurate/authorize', 'batchIndex' => $batchIndex + 1]);
-            } else {
-                $this->actionAuthorize($batchIndex + 1);
-            }
-        }catch (\yii\web\HttpException $e) {
+            $this->logBatchResults($logFile, $response, "Journal", $executionTime, $remainingTime, $accessToken, $session, $host, $batchIndex);
+            
+            sleep(5);
+            ini_set('max_execution_time', 9999);
+            // if ($batchIndex % 10 == 0) {
+            //     return $this->redirect(['accurate/authorize', 'batchIndex' => $batchIndex + 1]);
+            // } else {
+            //     $this->actionAuthorize($batchIndex + 1);
+            // }
+            $this->actionAuthorize($batchIndex + 1);
+        } catch (\Exception $e) {
             $this->logError($e);
             return [
-                'status' => $e->statusCode,
+                'status' => 500,
                 'message' => $e->getMessage(),
             ];
         }
@@ -742,13 +788,13 @@ class AccurateController extends Controller
         }
         $dateTime = date('Ymd_His'); 
         $logFile = $uploadPath . "logfileerror_{$dateTime}.txt";
-        $statuscode = $e->statusCode;
+        // $statuscode = $e->statusCode;
         $message = $e->getMessage();
 
         $dateTime = date('Ymd_His'); // Format: YYYYMMDD_HHMMSS
         file_put_contents($logFile, "Error log file created at: " . date('Y-m-d H:i:s') . "\n");
         $logMessages = "--------------------------------------------\n";
-        $logMessages .= "Status Code : $statuscode \n"; //ganti error message
+        // $logMessages .= "Status Code : $statuscode \n"; //ganti error message
         $logMessages .= "Message : $message \n"; //ganti error message
         $logMessages .= "--------------------------------------------\n";
         file_put_contents($logFile, $logMessages, FILE_APPEND);
