@@ -52,6 +52,8 @@ class ErrorController extends Controller
             $query->where(['info' => 'success']);
         } elseif ($filter === 'Missing response') {
             $query->where(['info' => 'Missing response']);
+        } elseif ($filter === 'duplicate') {
+            $query->where(['info' => 'duplicate']);
         }
 
         $dataProvider = new ActiveDataProvider([
@@ -65,12 +67,14 @@ class ErrorController extends Controller
         $successCountJournalError = JournalError::find()->where(['info' => 'success'])->count();
         $errorCountJournalError = JournalError::find()->where(['info' => 'error'])->count();
         $missingCountJournalError = JournalError::find()->where(['info' => 'Missing response'])->count();
+        $duplicateCountJournalError = JournalError::find()->where(['info' => 'duplicate'])->count();
 
         return $this->render('journalerrors', [
             'dataProvider' => $dataProvider,
             'successCountJournalError' => $successCountJournalError,
             'errorCountJournalError' => $errorCountJournalError,
             'missingCountJournalError' => $missingCountJournalError,
+            'duplicateCountJournalError' => $duplicateCountJournalError,
             'filter' => $filter,
         ]);
     }

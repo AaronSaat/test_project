@@ -15,7 +15,7 @@ $this->params['breadcrumbs'][] = $this->title;
 <?php
 $form = ActiveForm::begin([
     'id' => 'send-journal-api-form',
-    'action' => ['accurate/authorize?batchIndex=1'], // Arahkan ke action controller
+    'action' => ['accurate/authorize?batchIndex=317'], // Arahkan ke action controller
     'method' => 'post',
 ]); 
 ?>
