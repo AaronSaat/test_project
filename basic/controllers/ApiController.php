@@ -229,12 +229,7 @@ class ApiController extends Controller
 
                 $journalFilePath = $uploadPath . $model->journalFile->name;
 
-                //hapus semua dulu lalu input ulang
-                // JournalCompare::deleteAll();
-                // DetailCompare::deleteAll();
-
                 if ($model->journalFile->saveAs($journalFilePath)) {
-                    // Decode kedua file
                     $journalData = json_decode(file_get_contents($journalFilePath), true);  
 
                     if (isset($journalData['JV'])) {
@@ -244,7 +239,6 @@ class ApiController extends Controller
                             $JVNUMBER = $journal['JVNUMBER'];
                     
                             if (!isset($groupedJournals[$JVNUMBER])) {
-                                // Buat jurnal hanya sekali per JVNUMBER
                                 $groupedJournals[$JVNUMBER] = [
                                     'number' => $JVNUMBER,
                                     'transDate' => date('d/m/Y', strtotime($journal['TRANSDATE'])),
@@ -253,7 +247,6 @@ class ApiController extends Controller
                                     'journaldetail' => []
                                 ];
                     
-                                // Simpan di database JournalCompare
                                 $journalCompare = new JournalCompare();
                                 $journalCompare->number = $JVNUMBER;
                                 $journalCompare->transDate = date('d/m/Y', strtotime($journal['TRANSDATE']));
@@ -739,9 +732,6 @@ class ApiController extends Controller
                                 'amount' => (double)(str_replace('-', '', $journal['GLAMOUNT'])),
                                 'amountType' => isset($journal['SEQ']) && $journal['SEQ'] == 1 ? 'CREDIT' : 'DEBIT',
                                 'memo' => $journal['DESCRIPTION'],
-                                // 'vendorNo' => ($journal['SUBSIDIARY'] == 2 && isset($accountMapping[$journal['GLACCOUNT']]) && $accountMapping[$journal['GLACCOUNT']] == '2-2000')  
-                                // ? '1000'  
-                                // : (!empty($journal['SUBSIDIARY']) ? (string) $journal['SUBSIDIARY'] : "0")
                                 'vendorNo' => ($journal['SUBSIDIARY'] == 2 && $accountNoOri == '2000.05')  
                                 ? '1000' : (!empty($journal['SUBSIDIARY']) ? (string) $journal['SUBSIDIARY'] : "")
                             ];
@@ -765,19 +755,9 @@ class ApiController extends Controller
                             $journal['journaldetail'] = array_values($journal['journaldetail']);
                         }
                     
-                        // Simpan ke sesi untuk diproses lebih lanjut
                         Yii::$app->session->set('importJournalFromJson', array_values($groupedJournals));
                         Yii::$app->session->setFlash('success', "Files successfully uploaded and processed.");
                         return $this->redirect(['journal-index']);
-                        // return $this->redirect(['sendjournalapi']);
-                        // echo "<pre>";
-                            // print_r($filteredData);
-                            // echo "</pre>";
-                            // exit;
-                        // Render view untuk menampilkan tabel atau cek hasil
-                            // return $this->render('jsonuploadjournaltable', [
-                            //     'filteredData' => $filteredData,
-                            // ]);
                     }
                      else {
                         Yii::$app->session->setFlash('error', 'Invalid JSON format.');
@@ -785,7 +765,6 @@ class ApiController extends Controller
                 } else {
                     Yii::$app->session->setFlash('error', 'Failed to save uploaded files.');
                 }
-
                 return $this->refresh();
             }
         }
@@ -808,23 +787,9 @@ class ApiController extends Controller
         return $this->redirect(['accurate/authorize']);
     }
     public function actionSendjournalapi() 
-    {
-        // var_dump("masuk");die;
-        //$selectedIds = Yii::$app->request->post('selection', []);
-        
+    {    
         $journals = JournalCompare::find()->asArray()->all();
-        //var_dump(count($journals));die;
-        // foreach ($journals as $journalprint) {
-        //     echo "<pre>";
-        //     var_dump($journalprint); 
-        //     echo "</pre>";
-        // }
-        // exit; 
 
-        //ini kalo cara lama
-        // $journals = Yii::$app->session->get('importJournalFromJson', []);
-
-        // Siapkan struktur data untuk API
         $formattedData = [];
         foreach ($journals as $journal) {
             $number = $journal['number'];
@@ -833,12 +798,10 @@ class ApiController extends Controller
                 'transDate' => $journal['transDate'],
                 'description' => $journal['description'],
                 'branchName' => $journal['branchName'],
-                // 'id' => 1755270,
                 'detailJournalVoucher' => [],
             ];
             
             $details = DetailCompare::find()->where(['number' => $number])->all();
-            // Tambahkan detail jurnal
             foreach ($details as $detail) {
                 $journalData['detailJournalVoucher'][] = [
                     'accountNo' => $detail->accountNo, 
@@ -851,11 +814,6 @@ class ApiController extends Controller
 
             $formattedData[] = $journalData;
         }
-
-        // echo "<pre>";
-        // var_dump($formattedData); 
-        // echo "</pre>";
-        // exit;
         
         Yii::$app->session->set('journalData', $formattedData);
         Yii::$app->session->set('inputScope', "journal_voucher_save");
@@ -865,7 +823,6 @@ class ApiController extends Controller
 
     public function actionDeletealljournalapi() 
     {
-        // var_dump('masuk');die;
         $ids = range(1, 99);
         Yii::$app->session->set('deleteJournalData', $ids);
         Yii::$app->session->set('inputScope', 'journal_voucher_delete');
@@ -875,9 +832,7 @@ class ApiController extends Controller
     
     public function actionSendaccountstoaol() //ini ke database XD
     {
-        // Ambil data dari session yang disimpan sebelumnya
         $importedAccounts = Yii::$app->session->get('importAccountFromJson', []);
-        // var_dump($importedAccounts); die;
         
         if (empty($importedAccounts)) {
             Yii::$app->session->setFlash('error', 'Tidak ada data yang tersedia untuk diimpor.');
@@ -905,7 +860,6 @@ class ApiController extends Controller
             // Menampilkan pesan sukses
             Yii::$app->session->setFlash('success', 'Akun berhasil masuk ke database!');
         } catch (\Exception $e) {
-            // Jika terjadi error, batalkan transaksi dan tampilkan pesan error
             Yii::$app->session->setFlash('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
 

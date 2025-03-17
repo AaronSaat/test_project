@@ -27,28 +27,20 @@ class AccurateController extends Controller
 
     public function actionAuthorize($batchIndex)
     {   
-        // Yii::$app->session->destroy();
-        // panggil cek API
         Yii::$app->session->set('batchIndex', $batchIndex);
         $oauth = Oauth2Model::find()->one();
-
-        //kalo sudah ada 3 itu langsung saja, gausah authorize lagi
+        
         if($oauth) {
             $is_session_id_active = $this->_cekSessionId($oauth->accessToken, $oauth->session_id,);
             if ($is_session_id_active) {
-                // die("test");
-                // $aol = $this->_accessAPI($action, $oauth->accessToken, $oauth->session_id, $oauth->host, $id);
                 $this->actionAddJournalVoucher($oauth->accessToken, $oauth->session_id, $oauth->host, $batchIndex);
-                // return $aol;
             } else {
                 $refresh_session_id = $this->_refreshSessionId($oauth->db_id, $oauth->session_id);
                 if ($refresh_session_id) {
                     $this->logRefreshSessionId($refresh_session_id);
                     Oauth2Model::updateAll(['session_id' => $refresh_session_id['x_session_id']], ['id' => $oauth->id]);
                 }
-                // $aol = $this->_accessAPI($action, $oauth->accessToken, $refresh_session_id['x_session_id'], $refresh_session_id['host'], $id);
                 $this->actionAddJournalVoucher($oauth->accessToken, $refresh_session_id['x_session_id'], $refresh_session_id['host'], $batchIndex);
-                // return $aol;
             }
         } else {
             $url = "https://account.accurate.id/oauth/authorize?" . http_build_query([
@@ -104,7 +96,6 @@ class AccurateController extends Controller
         if (isset($json->{"access_token"}) && isset($json->{"refresh_token"})) {
             $accessToken = $json->{"access_token"};
             $refreshToken = $json->{"refresh_token"};
-            // var_dump($accessToken, $refreshToken);die;
             
             $model = new Oauth2Model();
             $model->accessToken = $accessToken;
@@ -186,19 +177,6 @@ class AccurateController extends Controller
 
         $oauth = Oauth2Model::find()->one();
         $this->actionAddJournalVoucher($oauth->accessToken, $oauth->session_id, $oauth->host, 0);
-        // $this->getJournal($accessToken, $session, $host);    
-        // $this->deleteJournal($accessToken, $session, $host);    
-        // if (Yii::$app->session->get('inputScope') == "glaccount_save") {
-        //     $this->bulkSaveAccount($accessToken, $session, $host);
-        // }        
-        // else if (Yii::$app->session->get('inputScope') == "journal_voucher_save") {
-        //     $batchIndex = Yii::$app->session->get('batchIndex');
-        //     $this->actionAddJournalVoucher($accessToken, $session, $host, $batchIndex);
-        // } 
-        // else if (Yii::$app->session->get('inputScope') == "journal_voucher_delete") {
-        //     $this->deleteJournal($accessToken, $session, $host);    
-        // } 
-        // Session::flush();
     }
 
     private function executeCurlRequest($url, $method = 'GET', $headers = [], $postData = null) 
@@ -247,18 +225,7 @@ class AccurateController extends Controller
     }
 
     public function actionAddJournalVoucher($accessToken, $session, $host, $batchIndex)
-    {   
-        // try{
-            // if($batchIndex == 1){
-            //     Yii::$app->session->set('batchSave', 0);
-            // }
-
-            // $batchSave =  Yii::$app->session->get('batchSave');
-            // if($batchIndex == $batchSave){
-            //     $batchIndex = $batchIndex + 1;
-            // }
-            //too many redirect di index 19, jadi delete saat indexnya - 1     
-
+    {     
         $totalCount = JournalCompare::find()->count();
         $batchSize = 100;
         $totalBatch = ceil($totalCount / $batchSize);
@@ -295,17 +262,6 @@ class AccurateController extends Controller
         $startTime = microtime(true);
         $maxExecutionTime = ini_get('max_execution_time');
 
-        // $journals = JournalCompare::find()
-        // ->with('details')
-        // ->where(["=", "id", 601])
-        // ->asArray()
-        // ->all();
-
-        // echo "<pre>";
-        // print_r($journals);
-        // echo "</pre>";
-        // die;    
-        // JournalError::deleteAll();
         foreach ($journals as $key => $journal) {
             
             $content["data"][$key] = [
@@ -369,14 +325,6 @@ class AccurateController extends Controller
         } else {
             $this->actionAuthorize($batchIndex + 1);
         }
-            // $this->actionAuthorize($batchIndex + 1);
-        // } catch (\Exception $e) {
-        //     $this->logError($e);
-        //     return [
-        //         'status' => 500,
-        //         'message' => $e->getMessage(),
-        //     ];
-        // }
     }
 
     private function logBatchResults($logFile, $result, $executionTime, $remainingTime, $accessToken, $session, $host, $batchIndex)
@@ -449,17 +397,13 @@ class AccurateController extends Controller
 
         $is_session_id_active = $this->_cekSessionId($oauth->accessToken, $oauth->session_id,);
         if ($is_session_id_active) {
-            // $aol = $this->_accessAPI($action, $oauth->accessToken, $oauth->session_id, $oauth->host, $id);
             $this->actionAddJournalVoucher($oauth->accessToken, $oauth->session_id, $oauth->host, $batchIndex);
-            // return $aol;
         } else {
             $refresh_session_id = $this->_refreshSessionId($oauth->db_id, $oauth->session_id);
             if ($refresh_session_id) {
                 Oauth2Model::updateAll(['session_id' => $refresh_session_id['x_session_id']], ['id' => $oauth->id]);
             }
-            // $aol = $this->_accessAPI($action, $oauth->accessToken, $refresh_session_id['x_session_id'], $refresh_session_id['host'], $id);
             $this->actionAddJournalVoucher($oauth->accessToken, $oauth->session_id, $oauth->host, $batchIndex);
-            // return $aol;
         }
     }
 
@@ -568,211 +512,5 @@ class AccurateController extends Controller
         }
 
         file_put_contents($logFile, $logMessages, FILE_APPEND);
-    }
-
-    private function bulkSaveAccount($accessToken, $session, $host)
-    {
-        $accountData = Yii::$app->session->get('accountData');
-        
-        // Pisahkan data berdasarkan parentNo
-        $batchWithEmptyParentNo = [];
-        $batchWithFilledParentNo = [];
-
-        foreach ($accountData as $data) {
-            if (empty($data['parentNo'])) {
-                $batchWithEmptyParentNo[] = $data;
-            } else {
-                $batchWithFilledParentNo[] = $data;
-            }
-        }
-
-        $sortedAccountData = array_merge($batchWithEmptyParentNo, $batchWithFilledParentNo);
-        
-        $batchSize = 100;
-        $batches = array_chunk($sortedAccountData, $batchSize);
-
-        $header = [
-            "Authorization: Bearer $accessToken",
-            "X-Session-ID: $session",
-            "Content-Type: application/json"
-        ];
-
-        $uploadPath = Yii::getAlias('@webroot/uploads/logfile/');
-        if (!is_dir($uploadPath)) {
-            mkdir($uploadPath, 0777, true);
-        }
-        $logFile = $uploadPath . 'logfileaccount.txt';
-        if (file_exists($logFile)) {
-            unlink($logFile);
-        }
-        
-        $successCount = 0;
-        $errorCount = 0;
-        // AccountError::deleteAll();
-
-        foreach ($batches as $batchIndex => $batch) {
-            $cont = [];
-            foreach ($batch as $key => $data) {
-                $cont["data"][$key] = [
-                    "accountType" => $data["accountType"],
-                    "asOf" => $data["asOf"],
-                    "currencyCode" => $data["currencyCode"],
-                    "name" => $data["name"],
-                    "no" => $data["no"],
-                    "parentNo" => $data["parentNo"] ?? "", 
-                    "memo" => $data["memo"],
-                ];
-            }
-
-            $url = $host . "/accurate/api/glaccount/bulk-save.do";
-            // $url = $host . "/accurate/api/glaccount/save.do";
-        
-            $opts = [
-                "http" => [
-                    "method" => "POST",
-                    "header" => $header,
-                    "content" => json_encode($cont),
-                    "ignore_errors" => true,
-                ]
-            ];
-
-            $context = stream_context_create($opts);
-            $response = file_get_contents($url, false, $context);
-            $result = json_decode($response, true);
-
-            if (isset($result['d']) && is_array($result['d'])) {
-                foreach ($result['d'] as $item) {
-                    $message = $item['d'] ?? '';
-                    if (is_string($message) && strpos($message, 'berhasil disimpan') !== false) {
-                        $successCount++;
-                    } else {
-                        $errorCount++;
-                    }                    
-                }
-            }
-
-            $data = json_decode($response, true);
-            $this->logBatchResults($logFile, $batch, $result, $batchIndex + 1, "Account");
-        }   
-
-        // Yii::$app->session->setFlash('success', "Total data berhasil: {$successCount}");
-        // Yii::$app->session->setFlash('error', "Total data gagal: {$errorCount}");
-
-        return $this->redirect(['error/account-errors']);
-    }
-
-    private function deleteJournal($accessToken, $session, $host)
-    {
-        // $data = Yii::$app->session->get('journalData');
-        // $id = 2200;
-        // 2197-2202
-        // $ids = [2197, 2198, 2199, 2202]; 2000 - 2299
-        // 999, 1999
-        // 3304 - 3953
-        
-        // set id nya
-        $ids = range(3954, 7.969);
-        // $ids = Yii::$app->session->get('deleteJournalData');
-
-        $header = [
-            "Authorization: Bearer $accessToken",
-            "X-Session-ID: $session",
-            "Content-Type: application/json"
-        ];
-         
-        foreach ($ids as $id) {
-            $url = $host . "/accurate/api/journal-voucher/delete.do?id=" . $id;
-
-            $opts = [
-                "http" => [
-                    "method" => "DELETE",
-                    "header" => $header,
-                    // "content" => json_encode($content),
-                    "ignore_errors" => true,
-                ]
-            ];
-            
-            //delete
-            $context = stream_context_create($opts);
-            $response = file_get_contents($url, false, $context);
-            $result = json_decode($response, true);
-            
-            // var_dump($resu/lt); die;
-            if ($result['s']) {
-                Yii::$app->session->setFlash('success', 'Journal deleted successfully.');
-            } else {
-                Yii::$app->session->setFlash('error', 'Failed to delete journal: ' . implode(", ", $result['d']));
-            }
-        }
-        
-        return $this->redirect(['/error/journal-errors']);
-    }
-    private function deleteAccount($accessToken, $session, $host)
-    {
-        // 1, 999
-        $ids = range(1000, 1999);
-
-        $header = [
-            "Authorization: Bearer $accessToken",
-            "X-Session-ID: $session",
-            "Content-Type: application/json"
-        ];
-         
-        foreach ($ids as $id) {
-            $url = $host . "/accurate/api/glaccount/delete.do?id=" . $id;
-
-            $opts = [
-                "http" => [
-                    "method" => "DELETE",
-                    "header" => $header,
-                    // "content" => json_encode($content),
-                    "ignore_errors" => true,
-                ]
-            ];
-            
-            //delete
-            $context = stream_context_create($opts);
-            $response = file_get_contents($url, false, $context);
-            $result = json_decode($response, true);
-            
-            // var_dump($result); die;
-            if ($result['s']) {
-                Yii::$app->session->setFlash('success', 'Account deleted successfully.');
-            } else {
-                Yii::$app->session->setFlash('error', 'Failed to delete Account: ' . implode(", ", $result['d']));
-            }
-        }
-        
-        return $this->redirect(['/error/account-errors']);
-    }
-    
-    private function getJournal($accessToken, $session, $host)
-    {               
-
-        $header = [
-            "Authorization: Bearer $accessToken",
-            "X-SESSION-ID: $session",
-        ];
-
-        // Content
-        $content = array(
-            "fields" => "id,no,name"
-        );
-
-        $url = $host . "/accurate/api/item/list.do?" . http_build_query($content);
-        // $url = $host . "/accurate/api/item/detail.do" . $number;
-
-        $opts = [
-            "http" => [
-                "method" => "GET",
-                "header" => $header,
-                "ignore_errors" => true,
-            ]
-        ];
-
-        $context = stream_context_create($opts);
-        $response = file_get_contents($url, false, $context);
-
-        // var_dump($response); die;
     }
 } 
