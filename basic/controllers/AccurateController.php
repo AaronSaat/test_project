@@ -201,7 +201,7 @@ class AccurateController extends Controller
         }
 
         curl_setopt_array($curl, $options);
-        // curl_setopt($curl, CURLOPT_TIMEOUT, 360); 
+        curl_setopt($curl, CURLOPT_TIMEOUT, 360); //timeout
         $response = curl_exec($curl);
         $err = curl_error($curl);
         $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
@@ -238,7 +238,7 @@ class AccurateController extends Controller
         ->all();
 
         // titik berhenti rekursi
-        if ($batchIndex == $totalBatch + 1) {
+        if ($batchIndex == $totalBatch) {
             Yii::$app->session->setFlash('success', 'Semua jurnal berhasil dikirim.');
             return $this->redirect(['/error/journal-errors']); // Redirect ke halaman sukses
         }
