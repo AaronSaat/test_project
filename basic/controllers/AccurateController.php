@@ -185,7 +185,7 @@ class AccurateController extends Controller
         }
 
         $oauth = Oauth2Model::find()->one();
-        $this->actionAddJournalVoucher($oauth->accessToken, $oauth->session_id, $oauth->host, 1);
+        $this->actionAddJournalVoucher($oauth->accessToken, $oauth->session_id, $oauth->host, 0);
         // $this->getJournal($accessToken, $session, $host);    
         // $this->deleteJournal($accessToken, $session, $host);    
         // if (Yii::$app->session->get('inputScope') == "glaccount_save") {
@@ -351,17 +351,13 @@ class AccurateController extends Controller
             // echo "</pre>";
             // exit;   
             if (!$result['success']) {
-                // echo "<pre>";
-                // print_r($result);
-                // echo "</pre>";
-                // exit;   
-                throw new \Exception("Curl request failed: " . $result['error']);
-                // $this->logBatchResults($logFile, "Gagal", $executionTime, $remainingTime, $accessToken, $session, $host, $batchIndex);
+                //throw new \Exception("Curl request failed: " . $result['error']);
+                $this->logBatchResults($logFile, "Gagal", $executionTime, $remainingTime, $accessToken, $session, $host, $batchIndex);
+            } else {
+                $response = $result['data'];
+                $this->logBatchResults($logFile, $response, $executionTime, $remainingTime, $accessToken, $session, $host, $batchIndex);
             }
-            $response = $result['data'];
             
-
-            $this->logBatchResults($logFile, $response, $executionTime, $remainingTime, $accessToken, $session, $host, $batchIndex);
         } else {
             $this->logBatchResults($logFile, "Gagal", $executionTime, $remainingTime, $accessToken, $session, $host, $batchIndex);
         }
