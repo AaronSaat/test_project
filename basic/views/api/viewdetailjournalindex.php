@@ -31,6 +31,14 @@ $this->params['breadcrumbs'][] = $this->title;
         <th>Branch Name</th>
         <td><?= Html::encode($journalCompare->branchName) ?></td>
     </tr>
+    <tr>
+        <td style="color: green; font-weight: bold; text-align: center; background-color: #e6f9e6; padding: 10px;">
+            DEBIT: <?= Html::encode($totalDebit) ?>
+        </td>
+        <td style="color: red; font-weight: bold; text-align: center; background-color: #fde2e2; padding: 10px;">
+            CREDIT: <?= Html::encode($totalCredit) ?>
+        </td>
+    </tr>
 </table>
 
 <h3>Detail Journal</h3>

@@ -186,6 +186,7 @@ class AccurateController extends Controller
         
         $options = [
             CURLOPT_URL => $url,
+
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
@@ -236,11 +237,6 @@ class AccurateController extends Controller
         ->offset(($batchIndex) * $batchSize) 
         ->limit($batchSize) // Ambil 100 data
         ->all();
-
-        echo "<pre>";
-        print_r($journals);
-        echo "</pre>";
-        exit;
 
         // titik berhenti rekursi
         if ($batchIndex == $totalBatch) {
@@ -293,6 +289,11 @@ class AccurateController extends Controller
             }
         }
 
+        // echo "<pre>";
+        // print_r($content);
+        // echo "</pre>";
+        // exit;
+
         $url = $host . "/accurate/api/journal-voucher/bulk-save.do";
 
         $result = $this->executeCurlRequest(
@@ -301,6 +302,7 @@ class AccurateController extends Controller
             $headers, 
             json_encode($content)
         );  
+        // var_dump($result);
         
         // Log hasil eksekusi
         $executionTime = microtime(true) - $startTime;

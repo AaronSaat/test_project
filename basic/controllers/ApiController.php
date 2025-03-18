@@ -60,19 +60,32 @@ class ApiController extends Controller
         $journalCompare = JournalCompare::findOne($id);
         $number = $journalCompare->number;
 
+        // Ambil semua detail berdasarkan number
+        $details = DetailCompare::find()->where(['number' => $number])->all();
+
+        // Hitung total debit dan credit
+        $totalDebit = 0;
+        $totalCredit = 0;
+
+        foreach ($details as $detail) {
+            if ($detail->amountType == 'DEBIT') {
+                $totalDebit += $detail->amount;
+            } elseif ($detail->amountType == 'CREDIT') {
+                $totalCredit += $detail->amount;
+            }
+        }
+
         $dataProvider = new ActiveDataProvider([
             'query' => DetailCompare::find()->where(['number' => $number]),
-            // 'pagination' => [
-            //     'pageSize' => 200, 
-            // ],
         ]);
 
         return $this->render('viewdetailjournalindex', [
             'journalCompare' => $journalCompare,
             'dataProvider' => $dataProvider,
+            'totalDebit' => $totalDebit,
+            'totalCredit' => $totalCredit,
         ]);
     }
-
 
     public function actionJsonUploadIndex()
     {
@@ -727,7 +740,7 @@ class ApiController extends Controller
                                 'accountNo' => $journal['GLACCOUNT'],
                                 'accountOri' => $accountNoOri,
                                 'amount' => (double)(str_replace('-', '', $journal['GLAMOUNT'])),
-                                'amountType' => isset($journal['SEQ']) && $journal['SEQ'] == 1 ? 'CREDIT' : 'DEBIT',
+                                'amountType' => (double) $journal['GLAMOUNT'] > 0 ? 'DEBIT' : 'CREDIT',
                                 'memo' => $journal['DESCRIPTION'],
                                 'vendorNo' => ($journal['SUBSIDIARY'] == 2 && $accountNoOri == '2000.05')  
                                 ? '1000' : (!empty($journal['SUBSIDIARY']) ? (string) $journal['SUBSIDIARY'] : "")
@@ -740,7 +753,7 @@ class ApiController extends Controller
                             $detailCompare->accountNo = $journal['GLACCOUNT'];
                             $detailCompare->accountOri = $accountNoOri;
                             $detailCompare->amount = (double)(str_replace('-', '', $journal['GLAMOUNT']));
-                            $detailCompare->amountType = isset($journal['SEQ']) && $journal['SEQ'] == 1 ? 'CREDIT' : 'DEBIT';
+                            $detailCompare->amountType = (double) $journal['GLAMOUNT'] > 0 ? 'DEBIT' : 'CREDIT';
                             $detailCompare->memo = $journal['DESCRIPTION'];
                             $detailCompare->vendorNo = ($journal['SUBSIDIARY'] == 2 && $accountNoOri == '2000.05')  
                             ? '1000' : (!empty($journal['SUBSIDIARY']) ? (string) $journal['SUBSIDIARY'] : "");
@@ -751,8 +764,6 @@ class ApiController extends Controller
                         foreach ($groupedJournals as $JVNUMBER => &$journal) {
                             $journal['journaldetail'] = array_values($journal['journaldetail']);
                         }
-                    
-                        Yii::$app->session->set('importJournalFromJson', array_values($groupedJournals));
                         Yii::$app->session->setFlash('success', "Files successfully uploaded and processed.");
                         return $this->redirect(['journal-index']);
                     }
