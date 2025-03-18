@@ -20,29 +20,29 @@ $form = ActiveForm::begin([
 ]); 
 ?>
 
-<?= ''
-// GridView::widget([
-//     'dataProvider' => $dataProvider,
-//     'columns' => [
-//         ['class' => 'yii\grid\CheckboxColumn'],
-//         'id',             
-//         'number',        
-//         'description',        
-//         'transDate',        
-//         'branchName', 
-//         [
-//             'class' => 'yii\grid\ActionColumn',
-//             'template' => '{view-journal}',
-//             'buttons' => [
-//                 'view-journal' => function ($url, $model) {
-//                     return Html::a('Lihat Detail Jurnal', ['view-detail-journal-index', 'id' => $model->id], [
-//                         'class' => 'btn btn-primary btn-sm',
-//                     ]);
-//                 },
-//             ],
-//         ],
-//     ],
-// ]); 
+<?= 
+GridView::widget([
+    'dataProvider' => $dataProvider,
+    'columns' => [
+        ['class' => 'yii\grid\CheckboxColumn'],
+        'id',             
+        'number',        
+        'description',        
+        'transDate',        
+        'branchName', 
+        [
+            'class' => 'yii\grid\ActionColumn',
+            'template' => '{view-journal}',
+            'buttons' => [
+                'view-journal' => function ($url, $model) {
+                    return Html::a('Lihat Detail Jurnal', ['view-detail-journal-index', 'id' => $model->id], [
+                        'class' => 'btn btn-primary btn-sm',
+                    ]);
+                },
+            ],
+        ],
+    ],
+]); 
 ?>
 
 <div class="form-group">

@@ -237,6 +237,11 @@ class AccurateController extends Controller
         ->limit($batchSize) // Ambil 100 data
         ->all();
 
+        echo "<pre>";
+        print_r($journals);
+        echo "</pre>";
+        exit;
+
         // titik berhenti rekursi
         if ($batchIndex == $totalBatch) {
             Yii::$app->session->setFlash('success', 'Semua jurnal berhasil dikirim.');

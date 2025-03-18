@@ -40,21 +40,18 @@ class ApiController extends Controller
 
     public function actionJournalIndex()
     {
-        // // $query = JournalCompare::find();
-        // $query = JournalCompare::find()->limit(100); 
-        // ganti 51000
-        //$query = JournalCompare::find()->limit(20000);
+        $query = JournalCompare::find();
+        // $dataProvider = JournalCompare::find()->limit(20000);
 
-        // $dataProvider = new ActiveDataProvider([
-        //     'query' => $query,
-        //     'pagination' => [
-        //         'pageSize' => 50000,
-        //         // 'pagination' => false,
-        //     ],
-        // ]);
+        $dataProvider = new ActiveDataProvider([
+            'query' => $query,
+            // 'pagination' => [
+            //     'pageSize' => 50000,
+            // ],
+        ]);
 
         return $this->render('journalindex', [
-            //'dataProvider' => $dataProvider,
+            'dataProvider' => $dataProvider,
         ]);
     }
 
